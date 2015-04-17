@@ -1,7 +1,5 @@
 // Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using System.Linq;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
@@ -11,7 +9,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.PDB
 {
     public class PDBAsyncTests : CSharpTestBase
     {
-        [Fact(Skip = "1137300")]
+        [Fact(Skip = "1068894")]
+        [WorkItem(1137300, "DevDiv")]
         [WorkItem(631350, "DevDiv")]
         [WorkItem(643501, "DevDiv")]
         [WorkItem(689616, "DevDiv")]
@@ -99,7 +98,7 @@ class Driver
     IL_0050:  callvirt   ""System.Threading.Tasks.Task<int> System.Func<System.Threading.Tasks.Task<int>>.Invoke()""
     IL_0055:  callvirt   ""System.Runtime.CompilerServices.TaskAwaiter<int> System.Threading.Tasks.Task<int>.GetAwaiter()""
     IL_005a:  stloc.1
-    IL_005b:  ldloca.s   V_1
+   ~IL_005b:  ldloca.s   V_1
     IL_005d:  call       ""bool System.Runtime.CompilerServices.TaskAwaiter<int>.IsCompleted.get""
     IL_0062:  brtrue.s   IL_00a7
     IL_0064:  ldarg.0
@@ -201,6 +200,20 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         <entry offset=""0x0"" startLine=""8"" startColumn=""40"" endLine=""8"" endColumn=""44"" document=""0"" />
       </sequencePoints>
     </method>
+    <method containingType=""TestCase"" name=""Run"">
+      <customDebugInfo>
+        <forwardIterator name=""&lt;Run&gt;d__1"" />
+        <encLocalSlotMap>
+          <slot kind=""0"" offset=""26"" />
+          <slot kind=""0"" offset=""139"" />
+          <slot kind=""28"" offset=""146"" />
+        </encLocalSlotMap>
+        <encLambdaMap>
+          <methodOrdinal>1</methodOrdinal>
+          <lambda offset=""86"" />
+        </encLambdaMap>
+      </customDebugInfo>
+    </method>
     <method containingType=""TestCase"" name="".cctor"">
       <customDebugInfo>
         <using>
@@ -215,30 +228,6 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         <namespace name=""System.Threading"" />
         <namespace name=""System.Threading.Tasks"" />
       </scope>
-    </method>
-    <method containingType=""TestCase"" name=""Run"">
-      <customDebugInfo>
-        <forwardIterator name=""&lt;Run&gt;d__1"" />
-        <encLocalSlotMap>
-          <slot kind=""0"" offset=""26"" />
-          <slot kind=""0"" offset=""139"" />
-          <slot kind=""28"" offset=""146"" />
-        </encLocalSlotMap>
-        <encLambdaMap>
-          <methodOrdinal>1</methodOrdinal>
-          <lambda offset=""86"" />
-        </encLambdaMap>
-      </customDebugInfo>
-      <sequencePoints />
-    </method>
-    <method containingType=""Driver"" name="".cctor"">
-      <customDebugInfo>
-        <forward declaringType=""TestCase"" methodName="".cctor"" />
-      </customDebugInfo>
-      <sequencePoints>
-        <entry offset=""0x0"" startLine=""27"" startColumn=""5"" endLine=""27"" endColumn=""35"" document=""0"" />
-        <entry offset=""0x6"" startLine=""28"" startColumn=""5"" endLine=""28"" endColumn=""78"" document=""0"" />
-      </sequencePoints>
     </method>
     <method containingType=""Driver"" name=""Main"">
       <customDebugInfo>
@@ -260,6 +249,21 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         <local name=""t"" il_index=""0"" il_start=""0x0"" il_end=""0x23"" attributes=""0"" />
       </scope>
     </method>
+    <method containingType=""Driver"" name="".cctor"">
+      <customDebugInfo>
+        <forward declaringType=""TestCase"" methodName="".cctor"" />
+      </customDebugInfo>
+      <sequencePoints>
+        <entry offset=""0x0"" startLine=""27"" startColumn=""5"" endLine=""27"" endColumn=""35"" document=""0"" />
+        <entry offset=""0x6"" startLine=""28"" startColumn=""5"" endLine=""28"" endColumn=""78"" document=""0"" />
+      </sequencePoints>
+    </method>
+    <method containingType=""TestCase+&lt;&gt;c"" name=""&lt;Run&gt;b__1_0"">
+      <customDebugInfo>
+        <forwardIterator name=""&lt;&lt;Run&gt;b__1_0&gt;d"" />
+      </customDebugInfo>
+      <sequencePoints />
+    </method>
     <method containingType=""TestCase+&lt;Run&gt;d__1"" name=""MoveNext"">
       <customDebugInfo>
         <forward declaringType=""TestCase"" methodName="".cctor"" />
@@ -269,7 +273,7 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         </hoistedLocalScopes>
         <encLocalSlotMap>
           <slot kind=""27"" offset=""0"" />
-          <slot kind=""temp"" />
+          <slot kind=""33"" offset=""146"" />
           <slot kind=""temp"" />
           <slot kind=""temp"" />
           <slot kind=""1"" offset=""173"" />
@@ -283,6 +287,7 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         <entry offset=""0xf"" startLine=""15"" startColumn=""9"" endLine=""15"" endColumn=""51"" document=""0"" />
         <entry offset=""0x1a"" startLine=""16"" startColumn=""9"" endLine=""16"" endColumn=""71"" document=""0"" />
         <entry offset=""0x45"" startLine=""17"" startColumn=""9"" endLine=""17"" endColumn=""37"" document=""0"" />
+        <entry offset=""0x5b"" hidden=""true"" document=""0"" />
         <entry offset=""0xca"" startLine=""18"" startColumn=""9"" endLine=""18"" endColumn=""23"" document=""0"" />
         <entry offset=""0xd5"" hidden=""true"" document=""0"" />
         <entry offset=""0xd9"" startLine=""18"" startColumn=""24"" endLine=""18"" endColumn=""32"" document=""0"" />
@@ -303,7 +308,7 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         <encLocalSlotMap>
           <slot kind=""27"" offset=""0"" />
           <slot kind=""20"" offset=""0"" />
-          <slot kind=""temp"" />
+          <slot kind=""33"" offset=""2"" />
           <slot kind=""temp"" />
           <slot kind=""temp"" />
         </encLocalSlotMap>
@@ -313,6 +318,7 @@ sequencePoints: "TestCase+<Run>d__1.MoveNext");
         <entry offset=""0x7"" hidden=""true"" document=""0"" />
         <entry offset=""0xe"" startLine=""16"" startColumn=""32"" endLine=""16"" endColumn=""33"" document=""0"" />
         <entry offset=""0xf"" startLine=""16"" startColumn=""34"" endLine=""16"" endColumn=""58"" document=""0"" />
+        <entry offset=""0x1f"" hidden=""true"" document=""0"" />
         <entry offset=""0x78"" startLine=""16"" startColumn=""59"" endLine=""16"" endColumn=""68"" document=""0"" />
         <entry offset=""0x7c"" hidden=""true"" document=""0"" />
         <entry offset=""0x96"" startLine=""16"" startColumn=""69"" endLine=""16"" endColumn=""70"" document=""0"" />
@@ -391,7 +397,6 @@ namespace ConsoleApplication1
       <customDebugInfo>
         <forwardIterator name=""&lt;QBar&gt;d__2"" />
       </customDebugInfo>
-      <sequencePoints />
     </method>
     <method containingType=""ConsoleApplication1.Program"" name=""ZBar"">
       <customDebugInfo>
@@ -405,7 +410,6 @@ namespace ConsoleApplication1
           <slot kind=""28"" offset=""141"" />
         </encLocalSlotMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
     <method containingType=""ConsoleApplication1.Program"" name=""GetNextInt"" parameterNames=""random"">
       <customDebugInfo>
@@ -500,7 +504,8 @@ namespace ConsoleApplication1
 </symbols>");
         }
 
-        [Fact(Skip = "1137300")]
+        [Fact(Skip = "1068894")]
+        [WorkItem(1137300, "DevDiv")]
         [WorkItem(690180, "DevDiv")]
         public void TestAsyncDebug3()
         {
@@ -521,6 +526,18 @@ class TestCase
             compilation.VerifyPdb(@"
 <symbols>
   <methods>
+    <method containingType=""TestCase"" name=""Await"" parameterNames=""d"">
+      <customDebugInfo>
+        <forwardIterator name=""&lt;Await&gt;d__0"" />
+        <encLocalSlotMap>
+          <slot kind=""0"" offset=""15"" />
+          <slot kind=""28"" offset=""21"" />
+          <slot kind=""28"" offset=""21"" ordinal=""1"" />
+          <slot kind=""28"" offset=""21"" ordinal=""2"" />
+        </encLocalSlotMap>
+      </customDebugInfo>
+      <sequencePoints />
+    </method>
     <method containingType=""TestCase+&lt;Await&gt;d__0"" name=""MoveNext"">
       <customDebugInfo>
         <using>
@@ -531,7 +548,7 @@ class TestCase
         </hoistedLocalScopes>
         <encLocalSlotMap>
           <slot kind=""27"" offset=""0"" />
-          <slot kind=""temp"" />
+          <slot kind=""33"" offset=""21"" />
           <slot kind=""temp"" />
           <slot kind=""temp"" />
           <slot kind=""temp"" />
@@ -544,6 +561,7 @@ class TestCase
         <entry offset=""0x7"" hidden=""true"" document=""0"" />
         <entry offset=""0x11"" startLine=""5"" startColumn=""5"" endLine=""5"" endColumn=""6"" document=""0"" />
         <entry offset=""0x12"" startLine=""6"" startColumn=""9"" endLine=""6"" endColumn=""27"" document=""0"" />
+        <entry offset=""0xae"" hidden=""true"" document=""0"" />
         <entry offset=""0x233"" hidden=""true"" document=""0"" />
         <entry offset=""0x24d"" startLine=""7"" startColumn=""5"" endLine=""7"" endColumn=""6"" document=""0"" />
         <entry offset=""0x255"" hidden=""true"" document=""0"" />
@@ -642,7 +660,6 @@ class C
           <lambda offset=""95"" closure=""0"" />
         </encLambdaMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>");
@@ -742,7 +759,6 @@ class C
           <lambda offset=""95"" closure=""0"" />
         </encLambdaMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>");
@@ -831,7 +847,6 @@ class C
           <lambda offset=""95"" closure=""0"" />
         </encLambdaMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>");
@@ -931,7 +946,6 @@ class C
           <lambda offset=""95"" closure=""0"" />
         </encLambdaMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>");
@@ -1016,7 +1030,6 @@ class C
           <slot kind=""0"" offset=""19"" />
         </encLocalSlotMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>
@@ -1095,7 +1108,6 @@ class C
       <customDebugInfo>
         <forwardIterator name=""&lt;M&gt;d__0"" />
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>
@@ -1181,7 +1193,6 @@ class C
           <slot kind=""0"" offset=""19"" />
         </encLocalSlotMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>
@@ -1286,7 +1297,6 @@ class C
           <slot kind=""28"" offset=""105"" />
         </encLocalSlotMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>");
@@ -1552,7 +1562,6 @@ class C
           <slot kind=""29"" offset=""150"" ordinal=""3"" />
         </encLocalSlotMap>
       </customDebugInfo>
-      <sequencePoints />
     </method>
   </methods>
 </symbols>");
