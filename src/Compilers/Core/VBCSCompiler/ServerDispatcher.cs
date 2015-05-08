@@ -36,7 +36,7 @@ namespace Microsoft.CodeAnalysis.CompilerServer
     {
         private class ConnectionData
         {
-            public Task<CompletionReason> ConnectionTask;
+            public readonly Task<CompletionReason> ConnectionTask;
             public Task<TimeSpan?> ChangeKeepAliveTask;
 
             internal ConnectionData(Task<CompletionReason> connectionTask, Task<TimeSpan?> changeKeepAliveTask)
@@ -171,7 +171,7 @@ namespace Microsoft.CodeAnalysis.CompilerServer
 
             // If we aren't being asked to watch analyzer files then simple create a Task which never 
             // completes.  This is the behavior of AnalyzerWatcher when files don't change on disk.
-            Task analyzerTask = watchAnalyzerFiles ? AnalyzerWatcher.CreateWatchFilesTask() : new TaskCompletionSource<bool>().Task;
+            Task analyzerTask = watchAnalyzerFiles ? CompilerServerFileWatcher.CreateWatchFilesTask() : new TaskCompletionSource<bool>().Task;
 
             do
             {
