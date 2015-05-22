@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Test.Utilities;
@@ -14,7 +15,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Editting
 {
     public class SyntaxGeneratorTests
     {
-        private readonly SyntaxGenerator _g = SyntaxGenerator.GetGenerator(new AdhocWorkspace(), LanguageNames.CSharp);
+        private readonly Workspace _ws;
+        private readonly SyntaxGenerator _g;
 
         private readonly CSharpCompilation _emptyCompilation = CSharpCompilation.Create("empty",
                 references: new[] { TestReferences.NetFx.v4_0_30319.mscorlib, TestReferences.NetFx.v4_0_30319.System });
@@ -23,6 +25,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Editting
 
         public SyntaxGeneratorTests()
         {
+            _ws = new AdhocWorkspace();
+            _g = SyntaxGenerator.GetGenerator(_ws, LanguageNames.CSharp);
             _ienumerableInt = _emptyCompilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Construct(_emptyCompilation.GetSpecialType(SpecialType.System_Int32));
         }
 
@@ -867,6 +871,19 @@ public class MyAttribute : Attribute { public int Value {get; set;} }",
                     _g.IndexerDeclaration(parameters: new[] { _g.ParameterDeclaration("p", _g.IdentifierName("a")) }, type: _g.IdentifierName("t"), accessibility: Accessibility.Internal, modifiers: DeclarationModifiers.Abstract),
                     _g.IdentifierName("i")),
                 "public t this[a p]\r\n{\r\n    get\r\n    {\r\n    }\r\n\r\n    set\r\n    {\r\n    }\r\n}");
+
+            // convert private to public
+            var pim = _g.AsPrivateInterfaceImplementation(
+                    _g.MethodDeclaration("m", returnType: _g.IdentifierName("t"), accessibility: Accessibility.Private, modifiers: DeclarationModifiers.Abstract),
+                    _g.IdentifierName("i"));
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                _g.AsPublicInterfaceImplementation(pim, _g.IdentifierName("i2")),
+                "public t m()\r\n{\r\n}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                _g.AsPublicInterfaceImplementation(pim, _g.IdentifierName("i2"), "m2"),
+                "public t m2()\r\n{\r\n}");
         }
 
         [Fact]
@@ -895,6 +912,19 @@ public class MyAttribute : Attribute { public int Value {get; set;} }",
                     _g.CustomEventDeclaration("ep", _g.IdentifierName("t"), modifiers: DeclarationModifiers.Abstract),
                     _g.IdentifierName("i")),
                 "event t i.ep\r\n{\r\n    add\r\n    {\r\n    }\r\n\r\n    remove\r\n    {\r\n    }\r\n}");
+
+            // convert public to private
+            var pim = _g.AsPublicInterfaceImplementation(
+                    _g.MethodDeclaration("m", returnType: _g.IdentifierName("t"), accessibility: Accessibility.Private, modifiers: DeclarationModifiers.Abstract),
+                    _g.IdentifierName("i"));
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                _g.AsPrivateInterfaceImplementation(pim, _g.IdentifierName("i2")),
+                "t i2.m()\r\n{\r\n}");
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                _g.AsPrivateInterfaceImplementation(pim, _g.IdentifierName("i2"), "m2"),
+                "t i2.m2()\r\n{\r\n}");
         }
 
         [Fact]
@@ -2841,6 +2871,32 @@ public void M()
 {
 }");
         }
-#endregion
+
+        [WorkItem(293, "https://github.com/dotnet/roslyn/issues/293")]
+        [Fact]
+        [Trait(Traits.Feature, Traits.Features.Formatting)]
+        public void IntroduceBaseList()
+        {
+            var text = @"
+public class C
+{
+}
+";
+            var expected = @"
+public class C : IDisposable
+{
+}
+";
+
+            var root = SyntaxFactory.ParseCompilationUnit(text);
+            var decl = root.DescendantNodes().OfType<ClassDeclarationSyntax>().First();
+            var newDecl = _g.AddInterfaceType(decl, _g.IdentifierName("IDisposable"));
+            var newRoot = root.ReplaceNode(decl, newDecl);
+
+            var elasticOnlyFormatted = Formatter.Format(newRoot, SyntaxAnnotation.ElasticAnnotation, _ws).ToFullString();
+            Assert.Equal(expected, elasticOnlyFormatted);
+        }
+
+        #endregion
     }
 }

@@ -531,7 +531,7 @@ namespace Microsoft.CodeAnalysis.ExpressionEvaluator
                 fullImage,
                 metadataBytes,
                 symReader,
-                includeLocalSignatures);
+                includeLocalSignatures && (fullImage != null));
         }
 
         internal static AssemblyIdentity GetAssemblyIdentity(this MetadataReference reference)
@@ -763,6 +763,23 @@ namespace Microsoft.CodeAnalysis.ExpressionEvaluator
             }
             Assert.InRange(ilOffset, 0, int.MaxValue);
             return ilOffset;
+        }
+
+        internal static string GetMethodOrTypeSignatureParts(string signature, out string[] parameterTypeNames)
+        {
+            var parameterListStart = signature.IndexOf('(');
+            if (parameterListStart < 0)
+            {
+                parameterTypeNames = null;
+                return signature;
+            }
+
+            var parameters = signature.Substring(parameterListStart + 1, signature.Length - parameterListStart - 2);
+            var methodName = signature.Substring(0, parameterListStart);
+            parameterTypeNames = (parameters.Length == 0) ?
+                new string[0] :
+                parameters.Split(',');
+            return methodName;
         }
     }
 }

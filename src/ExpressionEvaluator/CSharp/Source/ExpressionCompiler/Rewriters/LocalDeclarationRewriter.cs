@@ -113,8 +113,8 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                 compilation.Assembly,
                 compilation.GetSpecialType(SpecialType.System_Byte));
 
-            var flags = CSharpCompilation.DynamicTransformsEncoder.Encode(local.Type, customModifiersCount: 0, refKind: RefKind.None).ToArray();
-            var bytes = new DynamicFlagsCustomTypeInfo(new BitArray(flags)).GetCustomTypeInfoPayload();
+            var flags = CSharpCompilation.DynamicTransformsEncoder.Encode(local.Type, customModifiersCount: 0, refKind: RefKind.None);
+            var bytes = DynamicFlagsCustomTypeInfo.Create(flags).GetCustomTypeInfoPayload();
             hasCustomTypeInfoPayload = bytes != null;
             if (!hasCustomTypeInfoPayload)
             {
@@ -124,7 +124,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
             var byteType = byteArrayType.ElementType;
             var intType = compilation.GetSpecialType(SpecialType.System_Int32);
 
-            var numBytes = bytes.Length;
+            var numBytes = bytes.Count;
             var initializerExprs = ArrayBuilder<BoundExpression>.GetInstance(numBytes);
             foreach (var b in bytes)
             {

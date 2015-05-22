@@ -71,6 +71,33 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Time (s).
+        /// </summary>
+        internal static string AnalyzerExecutionTimeColumnHeader {
+            get {
+                return ResourceManager.GetString("AnalyzerExecutionTimeColumnHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Analyzer.
+        /// </summary>
+        internal static string AnalyzerNameColumnHeader {
+            get {
+                return ResourceManager.GetString("AnalyzerNameColumnHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total analyzer execution time: {0} seconds..
+        /// </summary>
+        internal static string AnalyzerTotalExecutionTime {
+            get {
+                return ResourceManager.GetString("AnalyzerTotalExecutionTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Argument cannot be empty..
         /// </summary>
         internal static string ArgumentCannotBeEmpty {
@@ -666,6 +693,15 @@ namespace Microsoft.CodeAnalysis {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to NOTE: Elapsed time may be less than analyzer execution time because analyzers can run concurrently..
+        /// </summary>
+        internal static string MultithreadedAnalyzerExecutionNote {
+            get {
+                return ResourceManager.GetString("MultithreadedAnalyzerExecutionNote", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Name cannot be empty..
         /// </summary>
         internal static string NameCannotBeEmpty {
@@ -689,6 +725,15 @@ namespace Microsoft.CodeAnalysis {
         internal static string NameContainsInvalidCharacter {
             get {
                 return ResourceManager.GetString("NameContainsInvalidCharacter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No analyzers found.
+        /// </summary>
+        internal static string NoAnalyzersFound {
+            get {
+                return ResourceManager.GetString("NoAnalyzersFound", resourceCulture);
             }
         }
         

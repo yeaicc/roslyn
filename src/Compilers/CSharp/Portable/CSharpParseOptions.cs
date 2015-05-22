@@ -153,7 +153,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             return new CSharpParseOptions(this) { DocumentationMode = documentationMode };
         }
 
-        protected override ParseOptions CommonWithKind(SourceCodeKind kind)
+        public override ParseOptions CommonWithKind(SourceCodeKind kind)
         {
             return WithKind(kind);
         }
@@ -194,6 +194,13 @@ namespace Microsoft.CodeAnalysis.CSharp
                 // there are currently no parse options for experimental features
                 return new Dictionary<string, string>();
             }
+        }
+
+        internal bool IsFeatureEnabled(MessageID feature)
+        {
+            LanguageVersion availableVersion = LanguageVersion;
+            LanguageVersion requiredVersion = feature.RequiredVersion();
+            return availableVersion >= requiredVersion;
         }
 
         public override bool Equals(object obj)

@@ -76,8 +76,7 @@ End Class"
                 Integer& V_1,
                 Object V_2,
                 Boolean V_3,
-                Integer V_4, //c
-                Boolean V_5)
+                Integer V_4) //c
   IL_0000:  ldarg.0
   IL_0001:  ret
 }")
@@ -89,8 +88,7 @@ End Class"
                 Integer& V_1,
                 Object V_2,
                 Boolean V_3,
-                Integer V_4, //c
-                Boolean V_5)
+                Integer V_4) //c
   IL_0000:  ldarg.1
   IL_0001:  ret
 }")
@@ -102,8 +100,7 @@ End Class"
                 Integer& V_1,
                 Object V_2,
                 Boolean V_3,
-                Integer V_4, //c
-                Boolean V_5)
+                Integer V_4) //c
   IL_0000:  ldloc.0
   IL_0001:  ret
 }")
@@ -115,8 +112,7 @@ End Class"
                 Integer& V_1,
                 Object V_2,
                 Boolean V_3,
-                Integer V_4, //c
-                Boolean V_5)
+                Integer V_4) //c
   IL_0000:  ldloc.s    V_4
   IL_0002:  ret
 }")
@@ -418,7 +414,8 @@ End Class
                 Boolean V_2,
                 Object() V_3,
                 Integer V_4,
-                Object V_5) //o
+                Object V_5, //o
+                Boolean V_6)
   IL_0000:  ldloc.0
   IL_0001:  ldfld      ""C._Closure$__1-0.$VB$Local_args As Object()""
   IL_0006:  ret
@@ -432,7 +429,8 @@ End Class
                 Boolean V_2,
                 Object() V_3,
                 Integer V_4,
-                Object V_5) //o
+                Object V_5, //o
+                Boolean V_6)
   IL_0000:  ldloc.1
   IL_0001:  ret
 }")
@@ -445,7 +443,8 @@ End Class
                 Boolean V_2,
                 Object() V_3,
                 Integer V_4,
-                Object V_5) //o
+                Object V_5, //o
+                Boolean V_6)
   IL_0000:  ldloc.s    V_5
   IL_0002:  ret
 }")
@@ -1363,9 +1362,7 @@ End Class
   // Code size        7 (0x7)
   .maxstack  1
   .locals init (Boolean V_0,
-                Integer V_1,
-                Integer V_2,
-                Boolean V_3)
+                Integer V_1)
   IL_0000:  ldarg.0
   IL_0001:  ldfld      ""C.VB$StateMachine_1_F(Of T).$VB$Local_o As T()""
   IL_0006:  ret
@@ -1375,9 +1372,7 @@ End Class
   // Code size        7 (0x7)
   .maxstack  1
   .locals init (Boolean V_0,
-                Integer V_1,
-                Integer V_2,
-                Boolean V_3)
+                Integer V_1)
   IL_0000:  ldarg.0
   IL_0001:  ldfld      ""C.VB$StateMachine_1_F(Of T).$VB$ResumableLocal_i$1 As Integer""
   IL_0006:  ret
@@ -1387,9 +1382,7 @@ End Class
   // Code size        7 (0x7)
   .maxstack  1
   .locals init (Boolean V_0,
-                Integer V_1,
-                Integer V_2,
-                Boolean V_3)
+                Integer V_1)
   IL_0000:  ldarg.0
   IL_0001:  ldfld      ""C.VB$StateMachine_1_F(Of T).$VB$ResumableLocal_t1$2 As T""
   IL_0006:  ret
@@ -1400,9 +1393,7 @@ End Class
   // Code size        6 (0x6)
   .maxstack  1
   .locals init (Boolean V_0,
-                Integer V_1,
-                Integer V_2,
-                Boolean V_3)
+                Integer V_1)
   IL_0000:  newobj     ""Sub <>c__TypeVariables(Of T)..ctor()""
   IL_0005:  ret
 }")
@@ -1622,9 +1613,8 @@ End Class"
                 Integer V_1,
                 System.Threading.Tasks.Task(Of Integer) V_2,
                 System.Runtime.CompilerServices.TaskAwaiter V_3,
-                Boolean V_4,
-                C.VB$StateMachine_3_M V_5,
-                System.Exception V_6)
+                C.VB$StateMachine_3_M V_4,
+                System.Exception V_5)
   IL_0000:  ldarg.0
   IL_0001:  ldfld      ""C.VB$StateMachine_3_M.$VB$Local_x As Integer""
   IL_0006:  ret
@@ -1637,9 +1627,8 @@ End Class"
                 Integer V_1,
                 System.Threading.Tasks.Task(Of Integer) V_2,
                 System.Runtime.CompilerServices.TaskAwaiter V_3,
-                Boolean V_4,
-                C.VB$StateMachine_3_M V_5,
-                System.Exception V_6)
+                C.VB$StateMachine_3_M V_4,
+                System.Exception V_5)
   IL_0000:  ldarg.0
   IL_0001:  ldfld      ""C.VB$StateMachine_3_M.$VB$ResumableLocal_$VB$Closure_$0 As C._Closure$__3-0""
   IL_0006:  ldfld      ""C._Closure$__3-0.$VB$Local_y As Integer""
@@ -1773,8 +1762,7 @@ End Class
   .maxstack  1
   .locals init (Object V_0,
                 Boolean V_1,
-                Integer V_2, //x
-                Boolean V_3)
+                Integer V_2) //x
   IL_0000:  ldnull
   IL_0001:  starg.s    V_1
   IL_0003:  ret
@@ -2683,6 +2671,487 @@ End Class
             GetLocals(runtime, "C.M", argumentsOnly:=False, locals:=locals, count:=1, typeName:=typeName, testData:=testData)
             Assert.Equal("Me", locals.Single().LocalName)
             locals.Free()
+        End Sub
+
+        <WorkItem(2089, "https://github.com/dotnet/roslyn/issues/2089")>
+        <Fact>
+        Public Sub MultipleMeFields()
+            Const source =
+"Imports System
+Imports System.Threading.Tasks
+Class C
+    Async Shared Function F(a As Action) As Task
+        a()
+    End Function
+    Sub G(s As String)
+    End Sub
+    Async Sub M()
+        Dim s As String = Nothing
+        Await F(Sub() G(s))
+    End Sub
+End Class"
+            Dim comp = CreateCompilationWithReferences(
+                MakeSources(source),
+                {MscorlibRef_v4_0_30316_17626, MsvbRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929},
+                TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+            Dim context = CreateMethodContext(runtime, methodName:="C.VB$StateMachine_3_M.MoveNext")
+            Dim testData As New CompilationTestData()
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim typeName As String = Nothing
+            context.CompileGetLocals(locals, argumentsOnly:=False, typeName:=typeName, testData:=testData)
+            Assert.Equal(2, locals.Count)
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "Me", expectedILOpt:=
+"{
+  // Code size        7 (0x7)
+  .maxstack  1
+  .locals init (Integer V_0,
+                System.Runtime.CompilerServices.TaskAwaiter V_1,
+                C.VB$StateMachine_3_M V_2,
+                System.Exception V_3)
+  IL_0000:  ldarg.0
+  IL_0001:  ldfld      ""C.VB$StateMachine_3_M.$VB$Me As C""
+  IL_0006:  ret
+}")
+            VerifyLocal(testData, typeName, locals(1), "<>m1", "s", expectedILOpt:=
+"{
+  // Code size       12 (0xc)
+  .maxstack  1
+  .locals init (Integer V_0,
+                System.Runtime.CompilerServices.TaskAwaiter V_1,
+                C.VB$StateMachine_3_M V_2,
+                System.Exception V_3)
+  IL_0000:  ldarg.0
+  IL_0001:  ldfld      ""C.VB$StateMachine_3_M.$VB$ResumableLocal_$VB$Closure_$0 As C._Closure$__3-0""
+  IL_0006:  ldfld      ""C._Closure$__3-0.$VB$Local_s As String""
+  IL_000b:  ret
+}")
+            locals.Free()
+        End Sub
+
+        <WorkItem(2336, "https://github.com/dotnet/roslyn/issues/2336")>
+        <Fact>
+        Public Sub LocalsOnAsyncEndSub()
+            Const source = "
+Imports System
+Imports System.Threading.Tasks
+
+Class C
+    Async Sub M()
+        Dim s As String = Nothing
+#ExternalSource(""test"", 999)
+    End Sub
+#End ExternalSource
+End Class
+"
+            Dim comp = CreateCompilationWithReferences(
+                MakeSources(source),
+                {MscorlibRef_v4_0_30316_17626, MsvbRef_v4_0_30319_17929, SystemCoreRef_v4_0_30319_17929},
+                TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+            Dim context = CreateMethodContext(runtime, methodName:="C.VB$StateMachine_1_M.MoveNext", atLineNumber:=999)
+            Dim testData As New CompilationTestData()
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim typeName As String = Nothing
+            context.CompileGetLocals(locals, argumentsOnly:=False, typeName:=typeName, testData:=testData)
+            Assert.Equal(2, locals.Count)
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "Me")
+            VerifyLocal(testData, typeName, locals(1), "<>m1", "s")
+            locals.Free()
+        End Sub
+
+        <WorkItem(1139013, "DevDiv")>
+        <Fact>
+        Public Sub TransparentIdentifiers_FromParameter()
+            Const source = "
+Imports System.Linq
+
+Class C
+    Sub M(args As String())
+        Dim concat =
+            From x In args
+            Let y = x.ToString()
+            Let z = x.GetHashCode()
+            Select x & y & z
+    End Sub
+End Class
+"
+
+            Const methodName = "C._Closure$__._Lambda$__1-2"
+
+            Const zIL = "
+{
+  // Code size        7 (0x7)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ldfld      ""VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer).$z As Integer""
+  IL_0006:  ret
+}
+"
+
+            Const xIL = "
+{
+  // Code size       12 (0xc)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ldfld      ""VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer).$$VB$It As VB$AnonymousType_0(Of String, String)""
+  IL_0006:  ldfld      ""VB$AnonymousType_0(Of String, String).$x As String""
+  IL_000b:  ret
+}
+"
+
+            Const yIL = "
+{
+  // Code size       12 (0xc)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ldfld      ""VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer).$$VB$It As VB$AnonymousType_0(Of String, String)""
+  IL_0006:  ldfld      ""VB$AnonymousType_0(Of String, String).$y As String""
+  IL_000b:  ret
+}
+"
+
+            Dim comp = CreateCompilationWithMscorlib({source}, {SystemCoreRef, MsvbRef}, TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+
+            Dim typeName As String = Nothing
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim testData As CompilationTestData = Nothing
+            GetLocals(runtime, methodName, argumentsOnly:=False, locals:=locals, count:=3, typeName:=typeName, testData:=testData)
+
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "z", expectedILOpt:=zIL)
+            VerifyLocal(testData, typeName, locals(1), "<>m1", "x", expectedILOpt:=xIL)
+            VerifyLocal(testData, typeName, locals(2), "<>m2", "y", expectedILOpt:=yIL)
+            locals.Free()
+
+            Dim context = CreateMethodContext(runtime, methodName)
+            Dim errorMessage As String = Nothing
+
+            testData = New CompilationTestData()
+            context.CompileExpression("z", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(zIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("x", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(xIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("y", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(yIL)
+        End Sub
+
+        <WorkItem(1139013, "DevDiv")>
+        <Fact>
+        Public Sub TransparentIdentifiers_FromDisplayClassField()
+            Const source = "
+Imports System.Linq
+
+Class C
+    Sub M(args As String())
+        Dim concat =
+            From x In args
+            Let y = x.ToString()
+            Let z = x.GetHashCode()
+            Select x.Select(Function(c) y & z)
+    End Sub
+End Class
+"
+
+            Const methodName = "C._Closure$__1-0._Lambda$__3"
+
+            Const cIL = "
+{
+  // Code size        2 (0x2)
+  .maxstack  1
+  .locals init (String V_0)
+  IL_0000:  ldarg.1
+  IL_0001:  ret
+}
+"
+
+            Const zIL = "
+{
+  // Code size       12 (0xc)
+  .maxstack  1
+  .locals init (String V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldfld      ""C._Closure$__1-0.$VB$Local_$VB$It As VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer)""
+  IL_0006:  ldfld      ""VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer).$z As Integer""
+  IL_000b:  ret
+}
+"
+
+            Const xIL = "
+{
+  // Code size       17 (0x11)
+  .maxstack  1
+  .locals init (String V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldfld      ""C._Closure$__1-0.$VB$Local_$VB$It As VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer)""
+  IL_0006:  ldfld      ""VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer).$$VB$It As VB$AnonymousType_0(Of String, String)""
+  IL_000b:  ldfld      ""VB$AnonymousType_0(Of String, String).$x As String""
+  IL_0010:  ret
+}
+"
+
+            Const yIL = "
+{
+  // Code size       17 (0x11)
+  .maxstack  1
+  .locals init (String V_0)
+  IL_0000:  ldarg.0
+  IL_0001:  ldfld      ""C._Closure$__1-0.$VB$Local_$VB$It As VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer)""
+  IL_0006:  ldfld      ""VB$AnonymousType_1(Of VB$AnonymousType_0(Of String, String), Integer).$$VB$It As VB$AnonymousType_0(Of String, String)""
+  IL_000b:  ldfld      ""VB$AnonymousType_0(Of String, String).$y As String""
+  IL_0010:  ret
+}
+"
+
+            Dim comp = CreateCompilationWithMscorlib({source}, {SystemCoreRef, MsvbRef}, TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+
+            Dim typeName As String = Nothing
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim testData As CompilationTestData = Nothing
+            GetLocals(runtime, methodName, argumentsOnly:=False, locals:=locals, count:=4, typeName:=typeName, testData:=testData)
+
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "c", expectedILOpt:=cIL)
+            VerifyLocal(testData, typeName, locals(1), "<>m1", "z", expectedILOpt:=zIL)
+            VerifyLocal(testData, typeName, locals(2), "<>m2", "x", expectedILOpt:=xIL)
+            VerifyLocal(testData, typeName, locals(3), "<>m3", "y", expectedILOpt:=yIL)
+            locals.Free()
+
+            Dim context = CreateMethodContext(runtime, methodName)
+            Dim errorMessage As String = Nothing
+
+            testData = New CompilationTestData()
+            context.CompileExpression("c", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(cIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("z", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(zIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("x", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(xIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("y", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(yIL)
+        End Sub
+
+        <WorkItem(1139013, "DevDiv")>
+        <Fact>
+        Public Sub TransparentIdentifiers_It1()
+            Const source = "
+Imports System.Linq
+
+Class C
+    Sub M(args As String())
+        Dim concat =
+            From x In args, y In args
+            From z In args
+            Select x & y & z
+    End Sub
+End Class
+"
+
+            Const methodName = "C._Closure$__._Lambda$__1-3"
+
+            Const zIL = "
+{
+  // Code size        2 (0x2)
+  .maxstack  1
+  IL_0000:  ldarg.2
+  IL_0001:  ret
+}
+"
+
+            Const xIL = "
+{
+  // Code size        7 (0x7)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ldfld      ""VB$AnonymousType_0(Of String, String).$x As String""
+  IL_0006:  ret
+}
+"
+
+            Const yIL = "
+{
+  // Code size        7 (0x7)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ldfld      ""VB$AnonymousType_0(Of String, String).$y As String""
+  IL_0006:  ret
+}
+"
+
+            Dim comp = CreateCompilationWithMscorlib({source}, {SystemCoreRef, MsvbRef}, TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+
+            Dim typeName As String = Nothing
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim testData As CompilationTestData = Nothing
+            GetLocals(runtime, methodName, argumentsOnly:=False, locals:=locals, count:=3, typeName:=typeName, testData:=testData)
+
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "z", expectedILOpt:=zIL)
+            VerifyLocal(testData, typeName, locals(1), "<>m1", "x", expectedILOpt:=xIL)
+            VerifyLocal(testData, typeName, locals(2), "<>m2", "y", expectedILOpt:=yIL)
+            locals.Free()
+
+            Dim context = CreateMethodContext(runtime, methodName)
+            Dim errorMessage As String = Nothing
+
+            testData = New CompilationTestData()
+            context.CompileExpression("z", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(zIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("x", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(xIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("y", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(yIL)
+        End Sub
+
+        <WorkItem(1139013, "DevDiv")>
+        <Fact>
+        Public Sub TransparentIdentifiers_It2()
+            Const source = "
+Imports System.Linq
+
+Class C
+    Sub M(nums As Integer())
+        Dim q = From x In nums
+                Join y In nums
+                    Join z In nums
+                    On z Equals y
+                On x Equals y And z Equals x
+    End Sub
+End Class
+"
+
+            Const methodName = "C._Closure$__._Lambda$__1-5"
+
+            Const xIL = "
+{
+  // Code size        2 (0x2)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ret
+}
+"
+
+            Const yIL = "
+{
+  // Code size        7 (0x7)
+  .maxstack  1
+  IL_0000:  ldarg.2
+  IL_0001:  ldfld      ""VB$AnonymousType_1(Of Integer, Integer).$y As Integer""
+  IL_0006:  ret
+}
+"
+
+            Const zIL = "
+{
+  // Code size        7 (0x7)
+  .maxstack  1
+  IL_0000:  ldarg.2
+  IL_0001:  ldfld      ""VB$AnonymousType_1(Of Integer, Integer).$z As Integer""
+  IL_0006:  ret
+}
+"
+
+            Dim comp = CreateCompilationWithMscorlib({source}, {SystemCoreRef, MsvbRef}, TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+
+            Dim typeName As String = Nothing
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim testData As CompilationTestData = Nothing
+            GetLocals(runtime, methodName, argumentsOnly:=False, locals:=locals, count:=3, typeName:=typeName, testData:=testData)
+
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "x", expectedILOpt:=xIL)
+            VerifyLocal(testData, typeName, locals(1), "<>m1", "y", expectedILOpt:=yIL)
+            VerifyLocal(testData, typeName, locals(2), "<>m2", "z", expectedILOpt:=zIL)
+            locals.Free()
+
+            Dim context = CreateMethodContext(runtime, methodName)
+            Dim errorMessage As String = Nothing
+
+            testData = New CompilationTestData()
+            context.CompileExpression("x", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(xIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("y", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(yIL)
+
+            testData = New CompilationTestData()
+            context.CompileExpression("z", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(zIL)
+        End Sub
+
+        <WorkItem(1139013, "DevDiv")>
+        <Fact>
+        Public Sub TransparentIdentifiers_ItAnonymous()
+            Const source = "
+Imports System.Linq
+
+Class C
+    Sub M(args As String())
+        Dim concat =
+            From x In args
+            Group y = x.GetHashCode() By x
+                Into s = Sum(y + 3)
+    End Sub
+End Class
+"
+
+            Const methodName = "C._Closure$__._Lambda$__1-2"
+
+            Const xIL = "
+{
+  // Code size        2 (0x2)
+  .maxstack  1
+  IL_0000:  ldarg.1
+  IL_0001:  ret
+}
+"
+
+            Dim comp = CreateCompilationWithMscorlib({source}, {SystemCoreRef, MsvbRef}, TestOptions.DebugDll)
+            Dim runtime = CreateRuntimeInstance(comp)
+
+            Dim typeName As String = Nothing
+            Dim locals = ArrayBuilder(Of LocalAndMethod).GetInstance()
+            Dim testData As CompilationTestData = Nothing
+            GetLocals(runtime, methodName, argumentsOnly:=False, locals:=locals, count:=1, typeName:=typeName, testData:=testData)
+
+            VerifyLocal(testData, typeName, locals(0), "<>m0", "x", expectedILOpt:=xIL)
+            locals.Free()
+
+            Dim context = CreateMethodContext(runtime, methodName)
+            Dim errorMessage As String = Nothing
+
+            testData = New CompilationTestData()
+            context.CompileExpression("x", errorMessage, testData)
+            Assert.Null(errorMessage)
+            testData.GetMethodData("<>x.<>m0").VerifyIL(xIL)
         End Sub
 
         Private Shared Sub GetLocals(runtime As RuntimeInstance, methodName As String, argumentsOnly As Boolean, locals As ArrayBuilder(Of LocalAndMethod), count As Integer, ByRef typeName As String, ByRef testData As CompilationTestData)

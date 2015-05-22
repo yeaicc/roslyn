@@ -1275,6 +1275,51 @@ Next
         End Sub
 
         <Fact>
+        Public Sub MatchExceptionHandlers()
+            Dim src1 = "
+Try
+    Throw New InvalidOperationException()
+Catch e As IOException When filter(e)
+    Console.WriteLine(1)
+Catch e As Exception When filter(e)
+    Console.WriteLine(2)
+End Try
+"
+            Dim src2 = "
+Try
+    Throw New InvalidOperationException()
+Catch e As IOException When filter(e)
+    Console.WriteLine(1)
+Catch e As Exception When filter(e)
+    Console.WriteLine(2)
+End Try
+"
+
+            Dim match = GetMethodMatches(src1, src2, stateMachine:=StateMachineKind.None)
+            Dim actual = ToMatchingPairs(match)
+
+            Dim expected = New MatchingPairs From
+            {
+                {"Sub F()", "Sub F()"},
+                {"Try     Throw New InvalidOperationException() Catch e As IOException When filter(e)     Console.WriteLine(1) Catch e As Exception When filter(e)     Console.WriteLine(2) End Try", "Try     Throw New InvalidOperationException() Catch e As IOException When filter(e)     Console.WriteLine(1) Catch e As Exception When filter(e)     Console.WriteLine(2) End Try"},
+                {"Try", "Try"},
+                {"Throw New InvalidOperationException()", "Throw New InvalidOperationException()"},
+                {"Catch e As IOException When filter(e)     Console.WriteLine(1)", "Catch e As IOException When filter(e)     Console.WriteLine(1)"},
+                {"Catch e As IOException When filter(e)", "Catch e As IOException When filter(e)"},
+                {"When filter(e)", "When filter(e)"},
+                {"Console.WriteLine(1)", "Console.WriteLine(1)"},
+                {"Catch e As Exception When filter(e)     Console.WriteLine(2)", "Catch e As Exception When filter(e)     Console.WriteLine(2)"},
+                {"Catch e As Exception When filter(e)", "Catch e As Exception When filter(e)"},
+                {"When filter(e)", "When filter(e)"},
+                {"Console.WriteLine(2)", "Console.WriteLine(2)"},
+                {"End Try", "End Try"},
+                {"End Sub", "End Sub"}
+            }
+
+            expected.AssertEqual(actual)
+        End Sub
+
+        <Fact>
         Public Sub KnownMatches()
             Dim src1 = "Console.WriteLine(1   ) : Console.WriteLine( 1  )"
             Dim src2 = "Console.WriteLine(  1 ) : Console.WriteLine(   1)"
@@ -3983,6 +4028,71 @@ End Class
                 Diagnostic(RudeEditKind.AccessingCapturedVariableInLambda, "Function(a)", "Me", VBFeaturesResources.LambdaExpression).WithFirstLine("G(Function(a) x)       ' error: disconnecting previously connected closures"),
                 Diagnostic(RudeEditKind.NotAccessingCapturedVariableInLambda, "Function(a)", "y1", VBFeaturesResources.LambdaExpression).WithFirstLine("G(Function(a) x)       ' error: disconnecting previously connected closures"))
         End Sub
+
+        <Fact>
+        Public Sub Lambdas_RenameCapturedLocal1()
+            Dim src1 = "
+Imports System
+Imports System.Diagnostics
+
+Class Program
+
+    Shared Sub Main()
+        Dim x As Integer = 1
+        Dim f As Func(Of Integer) = Function() x
+    End Sub
+End Class
+"
+            Dim src2 = "
+Imports System
+Imports System.Diagnostics
+
+Class Program
+
+    Shared Sub Main()
+        Dim X As Integer = 1
+        Dim f As Func(Of Integer) = Function() X
+    End Sub
+End Class
+"
+            Dim edits = GetTopEdits(src1, src2)
+
+            ' Note that lifted variable is a field, which can't be renamed
+            edits.VerifySemanticDiagnostics(
+                Diagnostic(RudeEditKind.RenamingCapturedVariable, "X", "x", "X"))
+        End Sub
+
+        <Fact>
+        Public Sub Lambdas_RenameCapturedLocal2()
+            Dim src1 = "
+Imports System
+Imports System.Diagnostics
+
+Class Program
+
+    Shared Sub Main()
+        Dim x As Integer = 1
+        Dim f As Func(Of Integer) = Function() x
+    End Sub
+End Class
+"
+            Dim src2 = "
+Imports System
+Imports System.Diagnostics
+
+Class Program
+
+    Shared Sub Main()
+        Dim y As Integer = 1
+        Dim f As Func(Of Integer) = Function() y
+    End Sub
+End Class
+"
+
+            Dim edits = GetTopEdits(src1, src2)
+            edits.VerifySemanticDiagnostics(
+                Diagnostic(RudeEditKind.RenamingCapturedVariable, "y", "x", "y"))
+        End Sub
 #End Region
 
 #Region "Queries"
@@ -5343,7 +5453,6 @@ End Class
                 Diagnostic(RudeEditKind.NotAccessingCapturedVariableInLambda, "Select", "a", VBFeaturesResources.SelectClause),
                 Diagnostic(RudeEditKind.NotAccessingCapturedVariableInLambda, "Function()", "a", VBFeaturesResources.LambdaExpression))
         End Sub
-
 
         <Fact>
         Public Sub Queries_Insert1()

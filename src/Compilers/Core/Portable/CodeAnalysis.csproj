@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="AdditionalTextFile.cs" />
     <Compile Include="AssemblyReferenceResolver.cs" />
+    <Compile Include="AssemblyUtilities.cs" />
     <Compile Include="Binding\AbstractLookupSymbolsInfo.cs" />
     <Compile Include="CaseInsensitiveComparison.cs" />
     <Compile Include="CodeAnalysisResources.Designer.cs">
@@ -132,6 +133,8 @@
     <Compile Include="Compilation.EmitStreamProvider.cs" />
     <Compile Include="Compilation\SymbolFilter.cs" />
     <Compile Include="CompilerPathUtilities.cs" />
+    <Compile Include="ReflectionUtil.cs" />
+    <Compile Include="CorLightup.cs" />
     <Compile Include="Desktop\AssemblyPortabilityPolicy.cs" />
     <Compile Include="Desktop\AssemblyVersion.cs" />
     <Compile Include="Desktop\DesktopAssemblyIdentityComparer.cs" />
@@ -164,7 +167,6 @@
     <Compile Include="DocumentationCommentId.cs" />
     <Compile Include="Emit\EditAndContinue\SymbolMatcher.cs" />
     <Compile Include="InternalUtilities\FailFast.cs" />
-    <Compile Include="InternalUtilities\FileStreamLightUp.cs" />
     <Compile Include="InternalUtilities\InterlockedOperations.cs" />
     <Compile Include="InternalUtilities\IReadOnlySet.cs" />
     <Compile Include="Collections\KeyedStack.cs" />
@@ -280,7 +282,6 @@
     <Compile Include="InternalUtilities\ConsList`1.cs" />
     <Compile Include="InternalUtilities\DecimalUtilities.cs" />
     <Compile Include="InternalUtilities\DocumentationCommentXmlNames.cs" />
-    <Compile Include="InternalUtilities\EnsureSufficientExecutionStackLightUp.cs" />
     <Compile Include="InternalUtilities\EnumerableExtensions.ComparisonComparer.cs" />
     <Compile Include="InternalUtilities\EnumerableExtensions.cs" />
     <Compile Include="InternalUtilities\EnumField.cs" />
@@ -639,11 +640,8 @@
     <Compile Include="Xml\XmlCharType.cs" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="Microsoft.CodeAnalysis.Desktop" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.CSharp" />
-    <InternalsVisibleTo Include="Microsoft.CodeAnalysis.CSharp.Desktop" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.VisualBasic" />
-    <InternalsVisibleTo Include="Microsoft.CodeAnalysis.VisualBasic.Desktop" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.ExpressionEvaluator.ExpressionCompiler" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator.ExpressionCompiler" />
     <InternalsVisibleTo Include="Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator.ExpressionCompiler" />
@@ -655,7 +653,7 @@
     <InternalsVisibleTo Include="vbc" />
     <InternalsVisibleTo Include="vbi" />
     <InternalsVisibleTo Include="VBCSCompiler" />
-    <InternalsVisibleTo Include="Microsoft.Build.Tasks.Roslyn" />
+    <InternalsVisibleTo Include="Microsoft.Build.Tasks.CodeAnalysis" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.CommandLine.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.Emit.UnitTests" />
     <InternalsVisibleToTest Include="Roslyn.Compilers.CSharp.WinRT.UnitTests" />
@@ -714,6 +712,7 @@
       <HintPath>..\..\..\..\packages\System.Reflection.Metadata.$(SystemReflectionMetadataVersion)\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
     </Reference>
   </ItemGroup>
+<!-- Support for deterministic PDB (workitem 926)
   <ItemGroup>
     <Content Include="..\..\..\..\packages\Microsoft.DiaSymReader.Native.1.0.0-rc2\lib\any~windows\x86\Microsoft.DiaSymReader.Native.x86.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -722,6 +721,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+-->
   <Import Project="..\AnalyzerDriver\AnalyzerDriver.projitems" Label="Shared" />
   <Import Project="..\SharedCollections\SharedCollections.projitems" Label="Shared" />
   <ImportGroup Label="Targets">

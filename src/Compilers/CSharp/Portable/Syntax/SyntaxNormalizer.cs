@@ -157,7 +157,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
                 string text = i == 0
                     ? ""
                     : _indentations[i - 1].ToString() + _indentWhitespace;
-                _indentations.Add(SyntaxFactory.Whitespace(text, _useElasticTrivia));
+                _indentations.Add(_useElasticTrivia ? SyntaxFactory.ElasticWhitespace(text) : SyntaxFactory.Whitespace(text));
             }
 
             return _indentations[count];
@@ -536,7 +536,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
                     else if (trivia.IsKind(SyntaxKind.DocumentationCommentExteriorTrivia))
                     {
                         // recreate exterior to remove any leading whitespace
-                        currentTriviaList.Add(s_trimmedDocCommentExtertior);
+                        currentTriviaList.Add(s_trimmedDocCommentExterior);
                     }
                     else
                     {
@@ -598,7 +598,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax
             }
         }
 
-        private static SyntaxTrivia s_trimmedDocCommentExtertior = SyntaxFactory.DocumentationCommentExterior("///");
+        private static SyntaxTrivia s_trimmedDocCommentExterior = SyntaxFactory.DocumentationCommentExterior("///");
 
         private SyntaxTrivia GetSpace()
         {

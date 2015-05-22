@@ -298,8 +298,11 @@ namespace Microsoft.CodeAnalysis.Internal.Log
         Tagger_Diagnostics_Updated,
         SuggestedActions_HasSuggestedActionsAsync,
         SuggestedActions_GetSuggestedActions,
-        AnalyzerDependencyCheckingService_CheckForConflictsAsync,
+        AnalyzerDependencyCheckingService_LogConflict,
+        AnalyzerDependencyCheckingService_LogMissingDependency,
         VirtualMemory_MemoryLow,
         Extension_Exception,
+
+        WorkCoordinator_WaitForHigherPriorityOperationsAsync,
     }
 }

@@ -305,7 +305,7 @@ namespace Microsoft.Cci
             // NOTE: This is an attempt to match Dev10's apparent behavior.  For iterator methods (i.e. the method
             // that appears in source, not the synthesized ones), Dev10 only emits the ForwardIterator and IteratorLocal
             // custom debug info (e.g. there will be no information about the usings that were in scope).
-            if (!isIterator)
+            if (!isIterator && methodBody.ImportScope != null)
             {
                 IMethodDefinition forwardToMethod;
                 if (customDebugInfoWriter.ShouldForwardNamespaceScopes(Context, methodBody, methodToken, out forwardToMethod))
@@ -375,7 +375,7 @@ namespace Microsoft.Cci
             {
                 for (var scope = namespaceScopes; scope != null; scope = scope.Parent)
                 {
-                    foreach (var import in scope.GetUsedNamespaces(Context))
+                    foreach (var import in scope.GetUsedNamespaces())
                     {
                         if (import.TargetNamespaceOpt == null && import.TargetTypeOpt == null)
                         {
@@ -396,7 +396,7 @@ namespace Microsoft.Cci
             // file and namespace level
             for (IImportScope scope = namespaceScopes; scope != null; scope = scope.Parent)
             {
-                foreach (UsedNamespaceOrType import in scope.GetUsedNamespaces(Context))
+                foreach (UsedNamespaceOrType import in scope.GetUsedNamespaces())
                 {
                     var importString = TryEncodeImport(import, lazyDeclaredExternAliases, isProjectLevel: false);
                     if (importString != null)
@@ -424,7 +424,7 @@ namespace Microsoft.Cci
                     UsingNamespace("&" + assemblyName, module);
                 }
 
-                foreach (UsedNamespaceOrType import in module.GetImports(Context))
+                foreach (UsedNamespaceOrType import in module.GetImports())
                 {
                     var importString = TryEncodeImport(import, null, isProjectLevel: true);
                     if (importString != null)
@@ -624,6 +624,9 @@ namespace Microsoft.Cci
 
         private string GetAssemblyReferenceAlias(IAssemblyReference assembly, HashSet<string> declaredExternAliases)
         {
+            // no extern alias defined in scope at all -> error in compiler
+            Debug.Assert(declaredExternAliases != null);
+
             var allAliases = _metadataWriter.Context.Module.GetAssemblyReferenceAliases(_metadataWriter.Context);
             foreach (AssemblyReferenceAlias alias in allAliases)
             {
@@ -715,6 +718,7 @@ namespace Microsoft.Cci
 
         const string SymWriterClsid = "0AE2DEB0-F901-478b-BB9F-881EE8066788";
 
+#if DETERMINISTIC_PDB // workitem 926
         private static bool s_MicrosoftDiaSymReaderNativeLoadFailed;
 
         [DllImport("Microsoft.DiaSymReader.Native.x86.dll", EntryPoint = "CreateSymWriter")]
@@ -722,7 +726,7 @@ namespace Microsoft.Cci
 
         [DllImport("Microsoft.DiaSymReader.Native.amd64.dll", EntryPoint = "CreateSymWriter")]
         private extern static void CreateSymWriter64(ref Guid id, [MarshalAs(UnmanagedType.IUnknown)]out object symWriter);
-
+#endif
         private static Type GetCorSymWriterSxSType()
         {
             if (s_lazyCorSymWriterSxSType == null)
@@ -738,6 +742,7 @@ namespace Microsoft.Cci
         {
             object symWriter = null;
 
+#if DETERMINISTIC_PDB
             // First try to load an implementation from Microsoft.DiaSymReader.Native, which supports determinism.
             if (!s_MicrosoftDiaSymReaderNativeLoadFailed)
             {
@@ -759,7 +764,7 @@ namespace Microsoft.Cci
                     symWriter = null;
                 }
             }
-
+#endif
             if (symWriter == null)
             {
                 // Try to find a registered CLR implementation
@@ -781,6 +786,7 @@ namespace Microsoft.Cci
 
                 if (_deterministic)
                 {
+#if DETERMINISTIC_PDB
                     var deterministicSymWriter = symWriter as ISymUnmanagedWriter6;
                     if (deterministicSymWriter == null)
                     {
@@ -788,6 +794,9 @@ namespace Microsoft.Cci
                     }
 
                     deterministicSymWriter.InitializeDeterministic(new PdbMetadataWrapper(metadataWriter), _pdbStream);
+#else
+                    throw new NotSupportedException(CodeAnalysisResources.SymWriterNotDeterministic);
+#endif
                 }
                 else
                 {
@@ -805,6 +814,7 @@ namespace Microsoft.Cci
 
         public unsafe ContentId GetContentId()
         {
+#if DETERMINISTIC_PDB
             if (_deterministic)
             {
                 // Call to GetDebugInfo fails for SymWriter initialized using InitializeDeterministic.
@@ -822,7 +832,7 @@ namespace Microsoft.Cci
 
                 return id;
             }
-
+#endif
             // See symwrite.cpp - the data byte[] doesn't depend on the content of metadata tables or IL.
             // The writer only sets two values of the ImageDebugDirectory struct.
             // 
@@ -1416,6 +1426,6 @@ namespace Microsoft.Cci
             }
         }
 
-        #endregion
+#endregion
     }
 }
