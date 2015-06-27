@@ -288,7 +288,7 @@ class C
     public static void Main() {}
 }
 ");
-            var verifier = CompileAndVerify(compilation, emitters: TestEmitters.RefEmitUnsupported_640494);
+            var verifier = CompileAndVerify(compilation);
             verifier.VerifyIL("XAttribute..ctor(int)", @"{
   // Code size        7 (0x7)
   .maxstack  1
@@ -1423,7 +1423,6 @@ namespace AttributeTest
             // Verify attributes from source and then load metadata to see attributes are written correctly.
             var compVerifier = CompileAndVerify(
                 source,
-                emitters: TestEmitters.CCI,
                 sourceSymbolValidator: attributeValidator,
                 symbolValidator: attributeValidator,
                 expectedOutput: "True\r\n",
@@ -1556,7 +1555,7 @@ namespace AttributeTest
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(compilation, emitters: TestEmitters.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(compilation, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [WorkItem(541058, "DevDiv")]
@@ -1827,7 +1826,7 @@ namespace AttributeTest
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(compilation, emitters: TestEmitters.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(compilation, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [WorkItem(541709, "DevDiv")]
@@ -1977,7 +1976,7 @@ namespace AttributeTest
             };
 
             // Verify attributes from source and then load metadata to see attributes are written correctly.
-            CompileAndVerify(source, emitters: TestEmitters.RefEmitUnsupported_640494, sourceSymbolValidator: attributeValidator, symbolValidator: null);
+            CompileAndVerify(source, sourceSymbolValidator: attributeValidator, symbolValidator: null);
         }
 
         [Fact]
@@ -2348,7 +2347,7 @@ public class A : Attribute
     }
 }
 ";
-            CompileAndVerify(source, emitters: TestEmitters.RefEmitUnsupported_646007, expectedOutput: "int");
+            CompileAndVerify(source, expectedOutput: "int");
         }
 
         [WorkItem(541876, "DevDiv")]
@@ -3172,7 +3171,7 @@ class C
         Console.WriteLine(message == UnicodeReplacementCharacter + UnicodeReplacementCharacter);
     }
 }";
-            CompileAndVerify(source, emitters: TestEmitters.RefEmitBug, expectedOutput: "True");
+            CompileAndVerify(source, expectedOutput: "True");
         }
 
         [WorkItem(546621, "DevDiv")]
@@ -3294,7 +3293,7 @@ public class C
                                         UnicodeReplacementCharacter + UnicodeReplacementCharacter + UnicodeReplacementCharacter + UnicodeReplacementCharacter);
             };
 
-            CompileAndVerify(source, emitters: TestEmitters.CCI, sourceSymbolValidator: validator(true), symbolValidator: validator(false));
+            CompileAndVerify(source, sourceSymbolValidator: validator(true), symbolValidator: validator(false));
         }
 
         [Fact]
@@ -3509,21 +3508,22 @@ class A
             // It does not go on to produce the other errors.
 
             compilation.VerifyDiagnostics(
-                // (33,2): error CS0246: The type or namespace name 'XDoesNotExist' could not be found (are you missing a using directive or an assembly reference?)
-                // [XDoesNotExist()]
-                Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "XDoesNotExist").WithArguments("XDoesNotExist").WithLocation(33, 2),
-                // (34,2): error CS0181: Attribute constructor parameter 'd' has type 'decimal', which is not a valid attribute parameter type
-                // [X(1m)]
-                Diagnostic(ErrorCode.ERR_BadAttributeParamType, "X").WithArguments("d", "decimal").WithLocation(34, 2),
-                // (35,2): error CS0181: Attribute constructor parameter 'd' has type 'decimal', which is not a valid attribute parameter type
-                // [X(1)]
-                Diagnostic(ErrorCode.ERR_BadAttributeParamType, "X").WithArguments("d", "decimal").WithLocation(35, 2),
-                // (37,2): error CS0121: The call is ambiguous between the following methods or properties: 'XAttribute.XAttribute(decimal)' and 'XAttribute.XAttribute(ref int)'
-                // [X(A.dyn)]
-                Diagnostic(ErrorCode.ERR_AmbigCall, "X(A.dyn)").WithArguments("XAttribute.XAttribute(decimal)", "XAttribute.XAttribute(ref int)").WithLocation(37, 2),
-                // (38,2): error CS0181: Attribute constructor parameter 'd' has type 'decimal', which is not a valid attribute parameter type
-                // [X(m.NotAConstant() + 2)]
-                Diagnostic(ErrorCode.ERR_BadAttributeParamType, "X").WithArguments("d", "decimal").WithLocation(38, 2));
+    // (33,2): error CS0246: The type or namespace name 'XDoesNotExist' could not be found (are you missing a using directive or an assembly reference?)
+    // [XDoesNotExist()]
+    Diagnostic(ErrorCode.ERR_SingleTypeNameNotFound, "XDoesNotExist").WithArguments("XDoesNotExist").WithLocation(33, 2),
+    // (34,2): error CS0181: Attribute constructor parameter 'd' has type 'decimal', which is not a valid attribute parameter type
+    // [X(1m)]
+    Diagnostic(ErrorCode.ERR_BadAttributeParamType, "X").WithArguments("d", "decimal").WithLocation(34, 2),
+    // (35,2): error CS0181: Attribute constructor parameter 'd' has type 'decimal', which is not a valid attribute parameter type
+    // [X(1)]
+    Diagnostic(ErrorCode.ERR_BadAttributeParamType, "X").WithArguments("d", "decimal").WithLocation(35, 2),
+    // (37,2): error CS0121: The call is ambiguous between the following methods or properties: 'XAttribute.XAttribute(ref int)' and 'XAttribute.XAttribute(e1)'
+    // [X(A.dyn)]
+    Diagnostic(ErrorCode.ERR_AmbigCall, "X(A.dyn)").WithArguments("XAttribute.XAttribute(ref int)", "XAttribute.XAttribute(e1)").WithLocation(37, 2),
+    // (38,2): error CS0181: Attribute constructor parameter 'd' has type 'decimal', which is not a valid attribute parameter type
+    // [X(m.NotAConstant() + 2)]
+    Diagnostic(ErrorCode.ERR_BadAttributeParamType, "X").WithArguments("d", "decimal").WithLocation(38, 2)
+                );
         }
 
         [Fact]
@@ -5717,7 +5717,7 @@ public class C<T>
     public enum E { V }
 }";
 
-            CompileAndVerify(source, emitters: TestEmitters.RefEmitUnsupported_646014, expectedOutput: "");
+            CompileAndVerify(source, expectedOutput: "");
         }
 
         [WorkItem(544512, "DevDiv")]
@@ -5998,7 +5998,7 @@ class X: Attribute
 {
 }
 ";
-            CompileAndVerify(source5, emitters: TestEmitters.CCI, additionalRefs: new[] { comp1, comp2 });
+            CompileAndVerify(source5, additionalRefs: new[] { comp1, comp2 });
 
             // Multiple from PE, multiple from Source
             var source6 = @"
@@ -6605,8 +6605,7 @@ namespace Microsoft.Yeti
 } // namespace
 ";
 
-            // TODO: refemit prints numeric values for the enum elements.
-            CompileAndVerify(source, emitters: TestEmitters.RefEmitBug, expectedOutput: @"
+            CompileAndVerify(source, expectedOutput: @"
  - 5 -
  - 100 -
  - 100000 -
@@ -7218,11 +7217,11 @@ class Test
 
             var compilation2 = CreateCompilationWithMscorlib(source2, new[] { new CSharpCompilationReference(compilation1) });
 
-            CompileAndVerify(compilation2, emitters: TestEmitters.RefEmitBug, symbolValidator: (m) =>
-                                                                   {
-                                                                       Assert.Equal(2, m.ReferencedAssemblies.Length);
-                                                                       Assert.Equal("Bug1020038", m.ReferencedAssemblies[1].Name);
-                                                                   });
+            CompileAndVerify(compilation2, symbolValidator: (m) =>
+            {
+                Assert.Equal(2, m.ReferencedAssemblies.Length);
+                Assert.Equal("Bug1020038", m.ReferencedAssemblies[1].Name);
+            });
 
             var source3 = @"
 class CAttr : System.Attribute
@@ -7237,7 +7236,7 @@ class Test
 
             var compilation3 = CreateCompilationWithMscorlib(source3, new[] { new CSharpCompilationReference(compilation1) });
 
-            CompileAndVerify(compilation3, emitters: TestEmitters.RefEmitBug, symbolValidator: (m) =>
+            CompileAndVerify(compilation3, symbolValidator: (m) =>
             {
                 Assert.Equal(2, m.ReferencedAssemblies.Length);
                 Assert.Equal("Bug1020038", m.ReferencedAssemblies[1].Name);
@@ -7259,14 +7258,13 @@ class C<T>
             var compilation = CreateCompilationWithMscorlib(source, options: TestOptions.DebugDll);
 
             CompileAndVerify(compilation, symbolValidator: (m) =>
-                                                            {
-                                                                var cc = m.GlobalNamespace.GetTypeMember("C");
-                                                                var mm = cc.GetMember<MethodSymbol>("M");
+            {
+                var cc = m.GlobalNamespace.GetTypeMember("C");
+                var mm = cc.GetMember<MethodSymbol>("M");
 
-                                                                Assert.True(cc.TypeParameters.Single().GetAttributes().IsEmpty);
-                                                                Assert.Equal("XAttribute", mm.TypeParameters.Single().GetAttributes().Single().ToString());
-                                                            },
-                             emitters: TestEmitters.RefEmitBug);
+                Assert.True(cc.TypeParameters.Single().GetAttributes().IsEmpty);
+                Assert.Equal("XAttribute", mm.TypeParameters.Single().GetAttributes().Single().ToString());
+            });
         }
 
         [WorkItem(1144603, "DevDiv")]

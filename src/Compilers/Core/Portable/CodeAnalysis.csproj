@@ -133,7 +133,7 @@
     <Compile Include="Compilation.EmitStreamProvider.cs" />
     <Compile Include="Compilation\SymbolFilter.cs" />
     <Compile Include="CompilerPathUtilities.cs" />
-    <Compile Include="ReflectionUtil.cs" />
+    <Compile Include="InternalUtilities\ReflectionUtilities.cs" />
     <Compile Include="CorLightup.cs" />
     <Compile Include="Desktop\AssemblyPortabilityPolicy.cs" />
     <Compile Include="Desktop\AssemblyVersion.cs" />
@@ -270,7 +270,6 @@
     <Compile Include="Emit\NoPia\VtblGap.cs" />
     <Compile Include="Emit\CommonPEModuleBuilder.cs" />
     <Compile Include="Emit\SemanticEdit.cs" />
-    <Compile Include="Emit\TypeExport.cs" />
     <Compile Include="EnumConstantHelper.cs" />
     <Compile Include="InternalUtilities\ArrayExtensions.cs" />
     <Compile Include="InternalUtilities\BitArithmeticUtilities.cs" />
@@ -525,7 +524,7 @@
     <Compile Include="Symbols\Attributes\SecurityWellKnownAttributeData.cs" />
     <Compile Include="Symbols\Attributes\WellKnownAttributeData.cs" />
     <Compile Include="Symbols\CommonAttributeDataExtensions.cs" />
-    <Compile Include="Symbols\CustomModifer.cs" />
+    <Compile Include="Symbols\CustomModifier.cs" />
     <Compile Include="Symbols\IAliasSymbol.cs" />
     <Compile Include="Symbols\IArrayTypeSymbol.cs" />
     <Compile Include="Symbols\IAssemblySymbol.cs" />

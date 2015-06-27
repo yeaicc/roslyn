@@ -20,17 +20,6 @@ namespace Microsoft.Cci
     }
 
     /// <summary>
-    /// Represents an exported type.
-    /// </summary>
-    internal interface ITypeExport : IDefinition
-    {
-        /// <summary>
-        /// Type reference of the exported type.
-        /// </summary>
-        ITypeReference ExportedType { get; }
-    }
-
-    /// <summary>
     /// This interface models the metadata representation of an array type reference.
     /// </summary>
     internal interface IArrayTypeReference : ITypeReference
@@ -619,7 +608,7 @@ namespace Microsoft.Cci
         Boolean,
 
         /// <summary>
-        /// An usigned 16 bit integer representing a Unicode UTF16 code point.
+        /// An unsigned 16 bit integer representing a Unicode UTF16 code point.
         /// </summary>
         Char,
 
