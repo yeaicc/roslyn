@@ -17,8 +17,8 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
     {
         #region Symbol Error Tests
 
-        private static readonly ModuleMetadata s_mod1 = ModuleMetadata.CreateFromImage(TestResources.DiagnosticTests.DiagnosticTests.ErrTestMod01);
-        private static readonly ModuleMetadata s_mod2 = ModuleMetadata.CreateFromImage(TestResources.DiagnosticTests.DiagnosticTests.ErrTestMod02);
+        private static readonly ModuleMetadata s_mod1 = ModuleMetadata.CreateFromImage(TestResources.DiagnosticTests.ErrTestMod01);
+        private static readonly ModuleMetadata s_mod2 = ModuleMetadata.CreateFromImage(TestResources.DiagnosticTests.ErrTestMod02);
 
         [Fact()]
         public void CS0148ERR_BadDelegateConstructor()
@@ -1838,6 +1838,9 @@ class B : A
     // (8,34): error CS0112: A static member 'B.Q' cannot be marked as override, virtual, or abstract
     //     public static virtual object Q { get; }
     Diagnostic(ErrorCode.ERR_StaticNotVirtual, "Q").WithArguments("B.Q").WithLocation(8, 34),
+    // (8,34): error CS8026: Feature 'readonly automatically implemented properties' is not available in C# 5.  Please use language version 6 or greater.
+    //     public static virtual object Q { get; }
+    Diagnostic(ErrorCode.ERR_FeatureNotAvailableInVersion5, "Q").WithArguments("readonly automatically implemented properties", "6").WithLocation(8, 34),
     // (9,37): error CS0112: A static member 'B.R' cannot be marked as override, virtual, or abstract
     //     internal static abstract object R { get; set; }
     Diagnostic(ErrorCode.ERR_StaticNotVirtual, "R").WithArguments("B.R").WithLocation(9, 37),
@@ -6553,7 +6556,7 @@ public static int AT = (new { field = 2 }).field;
 ";
 
             ImmutableArray<Byte> ilBytes;
-            using (var reference = SharedCompilationUtils.IlasmTempAssembly(ilSource, appendDefaultHeader: false))
+            using (var reference = IlasmUtilities.CreateTempAssembly(ilSource, appendDefaultHeader: false))
             {
                 ilBytes = ReadFromFile(reference.Path);
             }
@@ -6622,7 +6625,7 @@ interface ITest20
 ";
 
             ImmutableArray<Byte> ilBytes;
-            using (var reference = SharedCompilationUtils.IlasmTempAssembly(ilSource, appendDefaultHeader: false))
+            using (var reference = IlasmUtilities.CreateTempAssembly(ilSource, appendDefaultHeader: false))
             {
                 ilBytes = ReadFromFile(reference.Path);
             }
@@ -14511,7 +14514,7 @@ class AAttribute : Attribute { }
 unsafe struct s
 {
     private fixed ushort _e_res[4]; 
-    void Error_UsingFixedBuffersWiththis()
+    void Error_UsingFixedBuffersWithThis()
     {
         ushort c = this._e_res;
     }
@@ -15138,7 +15141,7 @@ using System.Runtime.InteropServices;
 [assembly: Guid(""A7721B07-2448-447A-BA36-64682CBEF136"")]
 namespace NS
 {
-    public struct MyStuct
+    public struct MyStruct
     {
         private int _age;
         public string Name;
@@ -15149,7 +15152,7 @@ namespace NS
 {
     public static void Main()
     {
-        NS.MyStuct S = new NS.MyStuct();
+        NS.MyStruct S = new NS.MyStruct();
         System.Console.Write(S);
     }
 }
@@ -15158,9 +15161,9 @@ namespace NS
             var ref1 = new CSharpCompilationReference(comp, embedInteropTypes: true);
             var comp1 = CreateCompilationWithMscorlib(text, new[] { ref1 });
             comp1.VerifyEmitDiagnostics(
-                // (5,24): error CS1757: Embedded interop struct 'NS.MyStuct' can contain only public instance fields.
-                //         NS.MyStuct S = new NS.MyStuct();
-                Diagnostic(ErrorCode.ERR_InteropStructContainsMethods, "new NS.MyStuct()").WithArguments("NS.MyStuct"));
+                // (5,24): error CS1757: Embedded interop struct 'NS.MyStruct' can contain only public instance fields.
+                //         NS.MyStruct S = new NS.MyStruct();
+                Diagnostic(ErrorCode.ERR_InteropStructContainsMethods, "new NS.MyStruct()").WithArguments("NS.MyStruct"));
         }
 
         [Fact]
@@ -15363,7 +15366,7 @@ namespace ConsoleApplication1
                 Diagnostic(ErrorCode.ERR_GenericsUsedInNoPIAType));
         }
 
-        [Fact]
+        [Fact, WorkItem(6186, "https://github.com/dotnet/roslyn/issues/6186")]
         public void CS1770ERR_NoConversionForNubDefaultParam()
         {
             var text = @"using System;
@@ -15375,12 +15378,22 @@ class MyClass
     public void Foo1(int? x = default(int)) { }
     public void Foo2(E? x = default(E)) { }
     public void Foo3(DateTime? x = default(DateTime?)) { }
+    public void Foo4(DateTime? x = new DateTime?()) { }
 
     // Error:
-    public void Foo(DateTime? x = default(DateTime)) { }
+    public void Foo11(DateTime? x = default(DateTime)) { }
+    public void Foo12(DateTime? x = new DateTime()) { }
 }";
-            var comp = DiagnosticsUtils.VerifyErrorsAndGetCompilationWithMscorlib(text,
-                new ErrorDescription { Code = 1770, Line = 12, Column = 31 });
+            var comp = CreateCompilationWithMscorlib(text);
+
+            comp.VerifyDiagnostics(
+    // (13,33): error CS1770: A value of type 'DateTime' cannot be used as default parameter for nullable parameter 'x' because 'DateTime' is not a simple type
+    //     public void Foo11(DateTime? x = default(DateTime)) { }
+    Diagnostic(ErrorCode.ERR_NoConversionForNubDefaultParam, "x").WithArguments("System.DateTime", "x").WithLocation(13, 33),
+    // (14,33): error CS1770: A value of type 'DateTime' cannot be used as default parameter for nullable parameter 'x' because 'DateTime' is not a simple type
+    //     public void Foo12(DateTime? x = new DateTime()) { }
+    Diagnostic(ErrorCode.ERR_NoConversionForNubDefaultParam, "x").WithArguments("System.DateTime", "x").WithLocation(14, 33)
+                );
         }
 
         [Fact]
@@ -15617,7 +15630,14 @@ namespace N1
    class A { public int Foo() { return 2; }}
 }
 ";
-            CreateCompilationWithMscorlib(text).VerifyDiagnostics();
+            var expectedDiagnostics = new[] 
+            {
+                // (2,1): error CS7021: You cannot declare namespace in script code
+                // namespace N1
+                Diagnostic(ErrorCode.ERR_NamespaceNotAllowedInScript, "namespace").WithLocation(2, 1)
+            };
+
+            CreateCompilationWithMscorlib45(new[] { Parse(text, options: TestOptions.Script) }).VerifyDiagnostics(expectedDiagnostics);
         }
 
         [Fact]
@@ -16974,7 +16994,7 @@ class Test : TestBase   // CS0660
         }
 
         [Fact]
-        public void CS0660WRN_EqualityOpWithoutEquals_NoWarningWhenOveriddenWithDynamicParameter()
+        public void CS0660WRN_EqualityOpWithoutEquals_NoWarningWhenOverriddenWithDynamicParameter()
         {
             string source = @"
 public class C
@@ -19129,6 +19149,48 @@ class C
     static void Main() {}
 }";
             CreateCompilationWithMscorlib(source).VerifyDiagnostics();
+        }
+
+        [Fact]
+        public void AbstractInScript()
+        {
+            var source =
+@"internal abstract void M();
+internal abstract object P { get; }
+internal abstract event System.EventHandler E;";
+            var compilation = CreateCompilationWithMscorlib45(source, parseOptions: TestOptions.Script, options: TestOptions.DebugExe);
+            compilation.VerifyDiagnostics(
+                // (1,24): error CS0513: 'M()' is abstract but it is contained in non-abstract class 'Script'
+                // internal abstract void M();
+                Diagnostic(ErrorCode.ERR_AbstractInConcreteClass, "M").WithArguments("M()", "Script").WithLocation(1, 24),
+                // (2,30): error CS0513: 'P.get' is abstract but it is contained in non-abstract class 'Script'
+                // internal abstract object P { get; }
+                Diagnostic(ErrorCode.ERR_AbstractInConcreteClass, "get").WithArguments("P.get", "Script").WithLocation(2, 30),
+                // (3,45): error CS0513: 'E' is abstract but it is contained in non-abstract class 'Script'
+                // internal abstract event System.EventHandler E;
+                Diagnostic(ErrorCode.ERR_AbstractInConcreteClass, "E").WithArguments("E", "Script").WithLocation(3, 45));
+        }
+
+        [WorkItem(529225)]
+        [Fact]
+        public void AbstractInSubmission()
+        {
+            var references = new[] { MscorlibRef_v4_0_30316_17626, SystemCoreRef };
+            var source =
+@"internal abstract void M();
+internal abstract object P { get; }
+internal abstract event System.EventHandler E;";
+            var submission = CSharpCompilation.CreateScriptCompilation("s0.dll", SyntaxFactory.ParseSyntaxTree(source, options: TestOptions.Script), new[] { MscorlibRef_v4_0_30316_17626, SystemCoreRef });
+            submission.VerifyDiagnostics(
+                // (1,24): error CS0513: 'M()' is abstract but it is contained in non-abstract class 'Script'
+                // internal abstract void M();
+                Diagnostic(ErrorCode.ERR_AbstractInConcreteClass, "M").WithArguments("M()", "Script").WithLocation(1, 24),
+                // (2,30): error CS0513: 'P.get' is abstract but it is contained in non-abstract class 'Script'
+                // internal abstract object P { get; }
+                Diagnostic(ErrorCode.ERR_AbstractInConcreteClass, "get").WithArguments("P.get", "Script").WithLocation(2, 30),
+                // (3,45): error CS0513: 'E' is abstract but it is contained in non-abstract class 'Script'
+                // internal abstract event System.EventHandler E;
+                Diagnostic(ErrorCode.ERR_AbstractInConcreteClass, "E").WithArguments("E", "Script").WithLocation(3, 45));
         }
     }
 }

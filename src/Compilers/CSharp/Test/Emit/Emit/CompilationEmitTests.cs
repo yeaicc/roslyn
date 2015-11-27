@@ -79,7 +79,7 @@ public class X
 
 
 
-            // Verify use of cyrillic namespace results in same behavior
+            // Verify use of Cyrillic namespace results in same behavior
             source = @"
 namespace решения
 {
@@ -1765,7 +1765,7 @@ public sealed class ContentType
 {       
 	public void M(System.Collections.Generic.Dictionary<object, object> p)
 	{   
-		foreach (object paramterKey in p.Keys)
+		foreach (object parameterKey in p.Keys)
 		{
 		}
 	}

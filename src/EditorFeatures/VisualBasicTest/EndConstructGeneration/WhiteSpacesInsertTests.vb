@@ -11,9 +11,9 @@ Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGeneration
     Public Class WhiteSpacesInsertTests
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInsertWhiteSpace()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInsertWhiteSpace() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class X",
                          "  Sub y()",
                          "End Class"},
@@ -24,11 +24,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                          "  End Sub",
                          "End Class"},
                 afterCaret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInsertTabSpace()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInsertTabSpace() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class X",
                          vbTab + vbTab + "Sub y()",
                          "End Class"},
@@ -39,11 +39,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                          vbTab + vbTab + "End Sub",
                          "End Class"},
                 afterCaret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInsertDoubleWideWhiteSpace()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInsertDoubleWideWhiteSpace() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class X",
                          " Sub y()",
                          "End Class"},
@@ -55,6 +55,6 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                          "End Class"},
                 afterCaret:={2, -1})
 
-        End Sub
+        End Function
     End Class
 End Namespace

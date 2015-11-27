@@ -1,5 +1,6 @@
 ' Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+Imports System.Threading.Tasks
 Imports Microsoft.CodeAnalysis.Editor.VisualBasic.EndConstructGeneration
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
@@ -11,9 +12,9 @@ Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGeneration
     Public Class CustomEventTests
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub TestApplyAfterCustomEvent()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function TestApplyAfterCustomEvent() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class c1",
                          "    Custom Event foo As System.EventHandler",
                          "End Class"},
@@ -32,11 +33,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "    End Event",
                         "End Class"},
                 afterCaret:={3, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub TestApplyAfterCustomEventWithImportsStatement()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function TestApplyAfterCustomEventWithImportsStatement() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Imports System",
                          "Class c1",
                          "    Custom Event foo As EventHandler",
@@ -57,11 +58,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "    End Event",
                         "End Class"},
                 afterCaret:={4, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub TestApplyAfterCustomEventWithMissingDelegateType()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function TestApplyAfterCustomEventWithMissingDelegateType() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Imports System",
                          "Class c1",
                          "    Custom Event foo As FooHandler",
@@ -82,11 +83,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "    End Event",
                         "End Class"},
                 afterCaret:={4, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub TestApplyAfterCustomEventWithNonDelegateType()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function TestApplyAfterCustomEventWithNonDelegateType() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Imports System",
                          "Class c1",
                          "    Custom Event foo As Object",
@@ -107,11 +108,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "    End Event",
                         "End Class"},
                 afterCaret:={4, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub TestApplyAfterCustomEventWithGenericType()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function TestApplyAfterCustomEventWithGenericType() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Imports System",
                          "Class c1",
                          "    Custom Event foo As EventHandler(Of ConsoleCancelEventArgs)",
@@ -132,11 +133,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "    End Event",
                         "End Class"},
                 afterCaret:={4, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub DoNotApplyAfterCustomEventAlreadyTerminated()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function DoNotApplyAfterCustomEventAlreadyTerminated() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Imports System",
                        "Class c1",
                        "    Custom Event foo As EventHandler(Of ConsoleCancelEventArgs)",
@@ -152,6 +153,6 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                        "    End Event",
                        "End Class"},
                 caret:={2, -1})
-        End Sub
+        End Function
     End Class
 End Namespace

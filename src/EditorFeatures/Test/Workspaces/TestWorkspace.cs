@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Editor.Shared.Extensions;
@@ -66,9 +67,9 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
         /// Reset the thread affinity, in particular the designated foreground thread, to the active 
         /// thread.  
         /// </summary>
-        public static void ResetThreadAffinity()
+        internal static void ResetThreadAffinity(ForegroundThreadData foregroundThreadData = null)
         {
-            ForegroundThreadAffinitizedObject.Initialize(force: true);
+            foregroundThreadData = foregroundThreadData ?? ForegroundThreadAffinitizedObject.CurrentForegroundThreadData;
 
             // HACK: When the platform team took over several of our components they created a copy
             // of ForegroundThreadAffinitizedObject.  This needs to be reset in the same way as our copy
@@ -78,8 +79,8 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                 var type = assembly.GetType("Microsoft.VisualStudio.Language.Intellisense.Implementation.ForegroundThreadAffinitizedObject", throwOnError: false);
                 if (type != null)
                 {
-                    type.GetField("foregroundThread", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, ForegroundThreadAffinitizedObject.ForegroundThread);
-                    type.GetField("ForegroundTaskScheduler", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, ForegroundThreadAffinitizedObject.ForegroundTaskScheduler);
+                    type.GetField("foregroundThread", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, foregroundThreadData.Thread);
+                    type.GetField("ForegroundTaskScheduler", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, foregroundThreadData.TaskScheduler);
 
                     break;
                 }
@@ -143,17 +144,11 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
 
             if (exceptions.Count == 1)
             {
-                throw new Xunit.Sdk.AssertException(
-                    "A exception was encountered during execution and trapped by the editor:\r\n" +
-                    exceptions.Single().Message + "\r\n" +
-                    exceptions.Single().StackTrace);
+                throw exceptions.Single();
             }
             else if (exceptions.Count > 1)
             {
-                throw new Xunit.Sdk.AssertException(
-                    "More than one exception was encountered during execution and trapped by the editor:\r\n" +
-                    exceptions.First().Message + "\r\n" +
-                    exceptions.First().StackTrace);
+				throw new AggregateException(exceptions);
             }
 
             if (SynchronizationContext.Current != null)
@@ -209,9 +204,9 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             base.OnProjectReferenceRemoved(projectId, projectReference);
         }
 
-        public new void OnDocumentOpened(DocumentId documentId, SourceTextContainer textContainer, bool isCurrentContext = true)
+        public new Task OnDocumentOpenedAsync(DocumentId documentId, SourceTextContainer textContainer, bool isCurrentContext = true)
         {
-            base.OnDocumentOpened(documentId, textContainer, isCurrentContext);
+            return base.OnDocumentOpenedAsync(documentId, textContainer, isCurrentContext);
         }
 
         public void OnDocumentClosed(DocumentId documentId)

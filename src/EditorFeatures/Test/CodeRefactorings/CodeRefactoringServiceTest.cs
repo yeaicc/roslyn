@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces;
 using Microsoft.CodeAnalysis.Extensions;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
+using Roslyn.Test.Utilities;
 using Roslyn.Utilities;
 using Xunit;
 
@@ -18,22 +19,22 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.CodeRefactoringService
 {
     public class CodeRefactoringServiceTest
     {
-        [Fact]
-        public void TestExceptionInComputeRefactorings()
+        [WpfFact]
+        public async Task TestExceptionInComputeRefactorings()
         {
-            VerifyRefactoringDisabled(new ErrorCases.ExceptionInCodeActions());
+            await VerifyRefactoringDisabledAsync(new ErrorCases.ExceptionInCodeActions());
         }
 
-        [Fact]
-        public void TestExceptionInComputeRefactoringsAsync()
+        [WpfFact]
+        public async Task TestExceptionInComputeRefactoringsAsync()
         {
-            VerifyRefactoringDisabled(new ErrorCases.ExceptionInComputeRefactoringsAsync());
+            await VerifyRefactoringDisabledAsync(new ErrorCases.ExceptionInComputeRefactoringsAsync());
         }
 
-        public void VerifyRefactoringDisabled(CodeRefactoringProvider codeRefactoring)
+        public async Task VerifyRefactoringDisabledAsync(CodeRefactoringProvider codeRefactoring)
         {
             var refactoringService = new CodeRefactorings.CodeRefactoringService(GetMetadata(codeRefactoring));
-            using (var workspace = CSharpWorkspaceFactory.CreateWorkspaceFromFile(@"class Program {}"))
+            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromFileAsync(@"class Program {}"))
             {
                 var project = workspace.CurrentSolution.Projects.Single();
                 var document = project.Documents.Single();

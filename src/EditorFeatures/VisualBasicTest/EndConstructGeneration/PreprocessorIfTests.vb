@@ -11,32 +11,32 @@ Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGeneration
     Public Class PreprocessorIfTests
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub ApplyAfterHashIf()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function ApplyAfterHashIf() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"#If True Then"},
                 beforeCaret:={0, -1},
                 after:={"#If True Then",
                         "",
                         "#End If"},
                 afterCaret:={1, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub DontApplyAfterHashIfWhenEndIfExists()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function DontApplyAfterHashIfWhenEndIfExists() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"#If True Then",
                        "#End If"},
                 caret:={0, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration), WorkItem(537976)>
-        Public Sub DontApplyAfterHashElseIfWhenEndIfExists()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration), WorkItem(537976)>
+        Public Async Function DontApplyAfterHashElseIfWhenEndIfExists() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"#If True Then",
                        "#ElseIf True Then",
                        "#End If"},
                 caret:={1, -1})
-        End Sub
+        End Function
     End Class
 End Namespace

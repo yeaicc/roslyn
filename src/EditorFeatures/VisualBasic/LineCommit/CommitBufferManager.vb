@@ -115,7 +115,7 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.LineCommit
                     End If
 
                     Dim tree = _dirtyState.BaseDocument.GetSyntaxTreeAsync(cancellationToken).WaitAndGetResult(cancellationToken)
-                    _commitFormatter.CommitRegion(info.SpanToFormat, isExplicitFormat, info.UseSemantics, dirtyRegion, _dirtyState.BaseSnapshot, tree, cancellationToken)
+                    _commitFormatter.CommitRegionAsync(info.SpanToFormat, isExplicitFormat, info.UseSemantics, dirtyRegion, _dirtyState.BaseSnapshot, tree, cancellationToken).Wait(cancellationToken)
                 End Using
             Finally
                 ' We may have tracked a dirty region while committing or it may have been aborted.
@@ -224,7 +224,7 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.LineCommit
                 If documentBeforePreviousEdit IsNot Nothing Then
                     _documentBeforePreviousEdit = documentBeforePreviousEdit
                     ' Kick off a task to eagerly force compute InternalsVisibleTo semantics for all the references.
-                    ' This provides a noticable perf improvement when code cleanup is subsequently invoked on this document.
+                    ' This provides a noticeable perf improvement when code cleanup is subsequently invoked on this document.
                     Task.Run(Async Function()
                                  Await ForceComputeInternalsVisibleToAsync(documentBeforePreviousEdit, CancellationToken.None).ConfigureAwait(False)
                              End Function)

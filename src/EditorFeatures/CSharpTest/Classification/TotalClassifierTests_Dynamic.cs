@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System.Threading.Tasks;
 using Roslyn.Test.Utilities;
 using Xunit;
 
@@ -7,10 +8,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
 {
     public partial class TotalClassifierTests
     {
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsParamTypeAndDefault()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsParamTypeAndDefault()
         {
-            TestInClass(@"void M(dynamic d = default(dynamic",
+            await TestInClassAsync(@"void M(dynamic d = default(dynamic",
                 Keyword("void"),
                 Identifier("M"),
                 Punctuation.OpenParen,
@@ -22,10 +23,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Keyword("dynamic"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicExplicitConversion()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicExplicitConversion()
         {
-            TestInMethod(@"dynamic d = (dynamic)a;",
+            await TestInMethodAsync(@"dynamic d = (dynamic)a;",
                 Keyword("dynamic"),
                 Identifier("d"),
                 Operators.Equals,
@@ -36,10 +37,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicMethodCall()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicMethodCall()
         {
-            TestInMethod(@"dynamic.Equals(1, 1);",
+            await TestInMethodAsync(@"dynamic.Equals(1, 1);",
                 Identifier("dynamic"),
                 Operators.Dot,
                 Identifier("Equals"),
@@ -51,19 +52,19 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicNullable()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicNullable()
         {
-            TestInMethod(@"dynamic? a",
+            await TestInMethodAsync(@"dynamic? a",
                 Keyword("dynamic"),
                 Operators.QuestionMark,
                 Identifier("a"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsUsingAliasForClass()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsUsingAliasForClass()
         {
-            Test(@"using dynamic = System.EventArgs;",
+            await TestAsync(@"using dynamic = System.EventArgs;",
                 Keyword("using"),
                 Class("dynamic"),
                 Operators.Equals,
@@ -73,10 +74,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsUsingAliasForDelegate()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsUsingAliasForDelegate()
         {
-            Test(@"using dynamic = System.Action;",
+            await TestAsync(@"using dynamic = System.Action;",
                 Keyword("using"),
                 Delegate("dynamic"),
                 Operators.Equals,
@@ -86,10 +87,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsUsingAliasForStruct()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsUsingAliasForStruct()
         {
-            Test(@"using dynamic = System.DateTime;",
+            await TestAsync(@"using dynamic = System.DateTime;",
                 Keyword("using"),
                 Struct("dynamic"),
                 Operators.Equals,
@@ -99,10 +100,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsUsingAliasForEnum()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsUsingAliasForEnum()
         {
-            Test(@"using dynamic = System.DayOfWeek;",
+            await TestAsync(@"using dynamic = System.DayOfWeek;",
                 Keyword("using"),
                 Enum("dynamic"),
                 Operators.Equals,
@@ -112,10 +113,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsUsingAliasForInterface()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsUsingAliasForInterface()
         {
-            Test(@"using dynamic = System.IDisposable;",
+            await TestAsync(@"using dynamic = System.IDisposable;",
                 Keyword("using"),
                 Interface("dynamic"),
                 Operators.Equals,
@@ -125,10 +126,10 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsExternAlias()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsExternAlias()
         {
-            Test(@"extern alias dynamic;
+            await TestAsync(@"extern alias dynamic;
 class C { dynamic::Foo a; }",
                 Keyword("extern"),
                 Keyword("alias"),
@@ -145,10 +146,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsDelegateType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsDelegateType()
         {
-            Test(@"delegate void dynamic()",
+            await TestAsync(@"delegate void dynamic()",
                 Keyword("delegate"),
                 Keyword("void"),
                 Delegate("dynamic"),
@@ -156,10 +157,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseParen);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsDelegateReturnTypeAndParam()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsDelegateReturnTypeAndParam()
         {
-            Test(@"delegate dynamic MyDelegate (dynamic d)",
+            await TestAsync(@"delegate dynamic MyDelegate (dynamic d)",
                 Keyword("delegate"),
                 Keyword("dynamic"),
                 Delegate("MyDelegate"),
@@ -169,10 +170,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseParen);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsDelegateLocalVariable()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsDelegateLocalVariable()
         {
-            TestInMethod(@"Func<string> f = delegate { int dynamic = 10; return dynamic.ToString();};",
+            await TestInMethodAsync(@"Func<string> f = delegate { int dynamic = 10; return dynamic.ToString();};",
                 Identifier("Func"),
                 Punctuation.OpenAngle,
                 Keyword("string"),
@@ -197,10 +198,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsGenericTypeName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsGenericTypeName()
         {
-            Test(@"partial class dynamic<T> { } class C { dynamic<int> d; }",
+            await TestAsync(@"partial class dynamic<T> { } class C { dynamic<int> d; }",
                 Keyword("partial"),
                 Keyword("class"),
                 Class("dynamic"),
@@ -221,10 +222,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsGenericField()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsGenericField()
         {
-            Test(@"class A<T> { T dynamic; }",
+            await TestAsync(@"class A<T> { T dynamic; }",
                 Keyword("class"),
                 Class("A"),
                 Punctuation.OpenAngle,
@@ -237,10 +238,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsIndexerTypeAndParameter()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsIndexerTypeAndParameter()
         {
-            TestInClass(@"dynamic this[dynamic i]",
+            await TestInClassAsync(@"dynamic this[dynamic i]",
                 Keyword("dynamic"),
                 Keyword("this"),
                 Punctuation.OpenBracket,
@@ -249,10 +250,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseBracket);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsOperatorTypeAndParameter()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsOperatorTypeAndParameter()
         {
-            TestInClass(@"static dynamic operator +(dynamic d1)",
+            await TestInClassAsync(@"static dynamic operator +(dynamic d1)",
                 Keyword("static"),
                 Keyword("dynamic"),
                 Keyword("operator"),
@@ -263,10 +264,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseParen);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsOperatorName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsOperatorName()
         {
-            TestInClass(@"static explicit operator dynamic(dynamic s)",
+            await TestInClassAsync(@"static explicit operator dynamic(dynamic s)",
                 Keyword("static"),
                 Keyword("explicit"),
                 Keyword("operator"),
@@ -277,10 +278,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseParen);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsPropertyTypeAndName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsPropertyTypeAndName()
         {
-            TestInClass(@"dynamic dynamic { get; set; }",
+            await TestInClassAsync(@"dynamic dynamic { get; set; }",
                 Keyword("dynamic"),
                 Identifier("dynamic"),
                 Punctuation.OpenCurly,
@@ -291,19 +292,19 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsEventName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsEventName()
         {
-            TestInClass(@"event Action dynamic",
+            await TestInClassAsync(@"event Action dynamic",
                 Keyword("event"),
                 Identifier("Action"),
                 Identifier("dynamic"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsLinqLocalVariable()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsLinqLocalVariable()
         {
-            TestInMethod(@"var v = from dynamic in names",
+            await TestInMethodAsync(@"var v = from dynamic in names",
                 Keyword("var"),
                 Identifier("v"),
                 Operators.Equals,
@@ -313,10 +314,10 @@ class C { dynamic::Foo a; }",
                 Identifier("names"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsAnonymousTypePropertyName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsAnonymousTypePropertyName()
         {
-            TestInMethod(@"var v = from dynamic in names select new { dynamic = dynamic};",
+            await TestInMethodAsync(@"var v = from dynamic in names select new { dynamic = dynamic};",
                 Keyword("var"),
                 Identifier("v"),
                 Operators.Equals,
@@ -334,10 +335,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsArgumentToLambdaExpression()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsArgumentToLambdaExpression()
         {
-            TestInMethod(@"var p = names.Select(dynamic => dynamic.Length);",
+            await TestInMethodAsync(@"var p = names.Select(dynamic => dynamic.Length);",
                 Keyword("var"),
                 Identifier("p"),
                 Operators.Equals,
@@ -354,10 +355,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsAnonymousMethodLocalVariable()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsAnonymousMethodLocalVariable()
         {
-            TestInMethod(@"D f = delegate { string dynamic = ""a""; return dynamic.Length; };",
+            await TestInMethodAsync(@"D f = delegate { string dynamic = ""a""; return dynamic.Length; };",
                 Identifier("D"),
                 Identifier("f"),
                 Operators.Equals,
@@ -377,10 +378,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsMethodName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsMethodName()
         {
-            TestInClass(@"dynamic dynamic () { }",
+            await TestInClassAsync(@"dynamic dynamic () { }",
                 Keyword("dynamic"),
                 Identifier("dynamic"),
                 Punctuation.OpenParen,
@@ -389,10 +390,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsStaticMethodTypeAndParams()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsStaticMethodTypeAndParams()
         {
-            TestInClass(@"static dynamic dynamic(params dynamic[] dynamic){}",
+            await TestInClassAsync(@"static dynamic dynamic(params dynamic[] dynamic){}",
                 Keyword("static"),
                 Keyword("dynamic"),
                 Identifier("dynamic"),
@@ -407,10 +408,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicArraysInMethodSignature()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicArraysInMethodSignature()
         {
-            TestInClass(@"dynamic[] M(dynamic[] p, params dynamic[] pa) { }",
+            await TestInClassAsync(@"dynamic[] M(dynamic[] p, params dynamic[] pa) { }",
                 Keyword("dynamic"),
                 Punctuation.OpenBracket,
                 Punctuation.CloseBracket,
@@ -431,10 +432,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicInPartialMethods()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicInPartialMethods()
         {
-            TestInClass(@"partial void F(dynamic d); partial void F(dynamic d) { }",
+            await TestInClassAsync(@"partial void F(dynamic d); partial void F(dynamic d) { }",
                 Keyword("partial"),
                 Keyword("void"),
                 Identifier("F"),
@@ -454,10 +455,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicRefAndOutParameters()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicRefAndOutParameters()
         {
-            TestInClass(@"void F(ref dynamic r, out dynamic o) { }",
+            await TestInClassAsync(@"void F(ref dynamic r, out dynamic o) { }",
                 Keyword("void"),
                 Identifier("F"),
                 Punctuation.OpenParen,
@@ -473,10 +474,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicInExtensionMethod()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicInExtensionMethod()
         {
-            TestInClass(@"dynamic F(this dynamic self, dynamic p) { }",
+            await TestInClassAsync(@"dynamic F(this dynamic self, dynamic p) { }",
                 Keyword("dynamic"),
                 Identifier("F"),
                 Punctuation.OpenParen,
@@ -491,10 +492,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsBaseClass()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsBaseClass()
         {
-            Test(@"class C : dynamic { }",
+            await TestAsync(@"class C : dynamic { }",
                 Keyword("class"),
                 Class("C"),
                 Punctuation.Colon,
@@ -503,10 +504,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsGenericConstraint()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsGenericConstraint()
         {
-            Test(@"class C<T> where T : dynamic { }",
+            await TestAsync(@"class C<T> where T : dynamic { }",
                 Keyword("class"),
                 Class("C"),
                 Punctuation.OpenAngle,
@@ -520,10 +521,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicSizeOf()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicSizeOf()
         {
-            TestInClass(@"unsafe int M() { return sizeof(dynamic); }",
+            await TestInClassAsync(@"unsafe int M() { return sizeof(dynamic); }",
                 Keyword("unsafe"),
                 Keyword("int"),
                 Identifier("M"),
@@ -539,20 +540,20 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicTypeOf()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicTypeOf()
         {
-            TestInMethod(@"typeof(dynamic)",
+            await TestInMethodAsync(@"typeof(dynamic)",
                 Keyword("typeof"),
                 Punctuation.OpenParen,
                 Keyword("dynamic"),
                 Punctuation.CloseParen);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsArrayName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsArrayName()
         {
-            Test(@"int[] dynamic = { 1 };",
+            await TestAsync(@"int[] dynamic = { 1 };",
                 Keyword("int"),
                 Punctuation.OpenBracket,
                 Punctuation.CloseBracket,
@@ -564,10 +565,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicInForeach()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicInForeach()
         {
-            TestInMethod(@"foreach (dynamic dynamic in dynamic",
+            await TestInMethodAsync(@"foreach (dynamic dynamic in dynamic",
                 Keyword("foreach"),
                 Punctuation.OpenParen,
                 Keyword("dynamic"),
@@ -576,49 +577,49 @@ class C { dynamic::Foo a; }",
                 Identifier("dynamic"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicInUsing()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicInUsing()
         {
-            TestInMethod(@"using(dynamic d",
+            await TestInMethodAsync(@"using(dynamic d",
                 Keyword("using"),
                 Punctuation.OpenParen,
                 Keyword("dynamic"),
                 Identifier("d"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsLocalVariableName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsLocalVariableName()
         {
-            TestInMethod(@"dynamic dynamic;",
+            await TestInMethodAsync(@"dynamic dynamic;",
                 Keyword("dynamic"),
                 Identifier("dynamic"),
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsNamespaceName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsNamespaceName()
         {
-            Test(@"namespace dynamic { }",
+            await TestAsync(@"namespace dynamic { }",
                 Keyword("namespace"),
                 Identifier("dynamic"),
                 Punctuation.OpenCurly,
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsClassName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsClassName()
         {
-            Test(@"class dynamic { }",
+            await TestAsync(@"class dynamic { }",
                 Keyword("class"),
                 Class("dynamic"),
                 Punctuation.OpenCurly,
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsConstructorDeclarationName()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsConstructorDeclarationName()
         {
-            Test(@"class dynamic { dynamic() { } }",
+            await TestAsync(@"class dynamic { dynamic() { } }",
                 Keyword("class"),
                 Class("dynamic"),
                 Punctuation.OpenCurly,
@@ -630,10 +631,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsNamespaceAlias()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsNamespaceAlias()
         {
-            TestInMethod(@"dynamic.FileInfo file;",
+            await TestInMethodAsync(@"dynamic.FileInfo file;",
                 Identifier("dynamic"),
                 Operators.Dot,
                 Identifier("FileInfo"),
@@ -641,10 +642,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsGotoLabel()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsGotoLabel()
         {
-            TestInMethod(@"dynamic: int i = 0;
+            await TestInMethodAsync(@"dynamic: int i = 0;
         goto dynamic;",
                 Identifier("dynamic"),
                 Punctuation.Colon,
@@ -658,10 +659,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsEnumField()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsEnumField()
         {
-            TestInMethod(@"A a = A.dynamic;",
+            await TestInMethodAsync(@"A a = A.dynamic;",
                 Identifier("A"),
                 Identifier("a"),
                 Operators.Equals,
@@ -671,10 +672,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsEnumFieldDefinition()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsEnumFieldDefinition()
         {
-            Test(@"enum A { dynamic }",
+            await TestAsync(@"enum A { dynamic }",
                 Keyword("enum"),
                 Enum("A"),
                 Punctuation.OpenCurly,
@@ -682,20 +683,20 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsEnumType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsEnumType()
         {
-            Test(@"enum dynamic { }",
+            await TestAsync(@"enum dynamic { }",
                 Keyword("enum"),
                 Enum("dynamic"),
                 Punctuation.OpenCurly,
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsGenericTypeParameter()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsGenericTypeParameter()
         {
-            Test(@"class C<dynamic, T> where dynamic : T { dynamic d; }",
+            await TestAsync(@"class C<dynamic, T> where dynamic : T { dynamic d; }",
                 Keyword("class"),
                 Class("C"),
                 Punctuation.OpenAngle,
@@ -714,45 +715,45 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsFieldType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsFieldType()
         {
-            TestInClass(@"dynamic d",
+            await TestInClassAsync(@"dynamic d",
                 Keyword("dynamic"),
                 Identifier("d"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsStaticFieldType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsStaticFieldType()
         {
-            TestInClass(@"static dynamic d",
+            await TestInClassAsync(@"static dynamic d",
                 Keyword("static"),
                 Keyword("dynamic"),
                 Identifier("d"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsLocalVariableType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsLocalVariableType()
         {
-            TestInMethod(@"dynamic d",
+            await TestInMethodAsync(@"dynamic d",
                 Keyword("dynamic"),
                 Identifier("d"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsArrayLocalVariableType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsArrayLocalVariableType()
         {
-            TestInMethod(@"dynamic[] d",
+            await TestInMethodAsync(@"dynamic[] d",
                 Keyword("dynamic"),
                 Punctuation.OpenBracket,
                 Punctuation.CloseBracket,
                 Identifier("d"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsLambdaParameterType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsLambdaParameterType()
         {
-            TestInMethod(@"var q = a.Where((dynamic d) => d == dynamic);",
+            await TestInMethodAsync(@"var q = a.Where((dynamic d) => d == dynamic);",
                 Keyword("var"),
                 Identifier("q"),
                 Operators.Equals,
@@ -772,10 +773,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicArray()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicArray()
         {
-            TestInMethod(@"dynamic d = new dynamic[5];",
+            await TestInMethodAsync(@"dynamic d = new dynamic[5];",
                 Keyword("dynamic"),
                 Identifier("d"),
                 Operators.Equals,
@@ -787,10 +788,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicConstructor()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicConstructor()
         {
-            TestInMethod(@"dynamic d = new dynamic();",
+            await TestInMethodAsync(@"dynamic d = new dynamic();",
                 Keyword("dynamic"),
                 Identifier("d"),
                 Operators.Equals,
@@ -801,10 +802,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAfterIs()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAfterIs()
         {
-            TestInMethod(@"if (a is dynamic)",
+            await TestInMethodAsync(@"if (a is dynamic)",
                 Keyword("if"),
                 Punctuation.OpenParen,
                 Identifier("a"),
@@ -813,10 +814,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.CloseParen);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAfterAs()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAfterAs()
         {
-            TestInMethod(@"a = a as dynamic",
+            await TestInMethodAsync(@"a = a as dynamic",
                 Identifier("a"),
                 Operators.Equals,
                 Identifier("a"),
@@ -824,10 +825,10 @@ class C { dynamic::Foo a; }",
                 Keyword("dynamic"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsGenericTypeArgument()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsGenericTypeArgument()
         {
-            TestInMethod(@"List<dynamic> l = new List<dynamic>();",
+            await TestInMethodAsync(@"List<dynamic> l = new List<dynamic>();",
                 Identifier("List"),
                 Punctuation.OpenAngle,
                 Keyword("dynamic"),
@@ -844,10 +845,10 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsSecondGenericTypeArgument()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsSecondGenericTypeArgument()
         {
-            TestInMethod(@"KVP<string, dynamic> kvp;",
+            await TestInMethodAsync(@"KVP<string, dynamic> kvp;",
                 Identifier("KVP"),
                 Punctuation.OpenAngle,
                 Keyword("string"),
@@ -858,13 +859,13 @@ class C { dynamic::Foo a; }",
                 Punctuation.Semicolon);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsRegionLabel()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsRegionLabel()
         {
             var code =
 @"#region dynamic
 #endregion";
-            Test(code,
+            await TestAsync(code,
                 PPKeyword("#"),
                 PPKeyword("region"),
                 PPText("dynamic"),
@@ -872,30 +873,30 @@ class C { dynamic::Foo a; }",
                 PPKeyword("endregion"));
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsInterfaceType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsInterfaceType()
         {
-            Test(@"interface dynamic{}",
+            await TestAsync(@"interface dynamic{}",
                 Keyword("interface"),
                 Interface("dynamic"),
                 Punctuation.OpenCurly,
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsStructType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsStructType()
         {
-            Test(@"struct dynamic {  }",
+            await TestAsync(@"struct dynamic {  }",
                 Keyword("struct"),
                 Struct("dynamic"),
                 Punctuation.OpenCurly,
                 Punctuation.CloseCurly);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
-        public void DynamicAsUndefinedGenericType()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
+        public async Task DynamicAsUndefinedGenericType()
         {
-            TestInMethod(@"dynamic<int> d;",
+            await TestInMethodAsync(@"dynamic<int> d;",
                 Identifier("dynamic"),
                 Punctuation.OpenAngle,
                 Keyword("int"),

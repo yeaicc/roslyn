@@ -1,7 +1,9 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
-using Microsoft.CodeAnalysis.Completion.Providers;
+using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders.XmlDocCommentCompletion;
+using Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces;
 using Roslyn.Test.Utilities;
 using Xunit;
 
@@ -9,46 +11,50 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Completion.CompletionPr
 {
     public class XmlDocumentationCommentCompletionProviderTests : AbstractCSharpCompletionProviderTests
     {
-        internal override ICompletionProvider CreateCompletionProvider()
+        public XmlDocumentationCommentCompletionProviderTests(CSharpTestWorkspaceFixture workspaceFixture) : base(workspaceFixture)
+        {
+        }
+
+        internal override CompletionListProvider CreateCompletionProvider()
         {
             return new XmlDocCommentCompletionProvider();
         }
 
-        private void VerifyItemsExist(string markup, params string[] items)
+        private async Task VerifyItemsExistAsync(string markup, params string[] items)
         {
             foreach (var item in items)
             {
-                VerifyItemExists(markup, item);
+                await VerifyItemExistsAsync(markup, item);
             }
         }
 
-        private void VerifyItemsAbsent(string markup, params string[] items)
+        private async Task VerifyItemsAbsentAsync(string markup, params string[] items)
         {
             foreach (var item in items)
             {
-                VerifyItemIsAbsent(markup, item);
+                await VerifyItemIsAbsentAsync(markup, item);
             }
         }
 
-        protected override void VerifyWorker(string code, int position, string expectedItemOrNull, string expectedDescriptionOrNull, SourceCodeKind sourceCodeKind, bool usePreviousCharAsTrigger, bool checkForAbsence, bool experimental, int? glyph)
+        protected override async Task VerifyWorkerAsync(string code, int position, string expectedItemOrNull, string expectedDescriptionOrNull, SourceCodeKind sourceCodeKind, bool usePreviousCharAsTrigger, bool checkForAbsence, bool experimental, int? glyph)
         {
             // We don't need to try writing comments in from of items in doc comments.
-            VerifyAtPosition(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
-            VerifyAtEndOfFile(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
+            await VerifyAtPositionAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
+            await VerifyAtEndOfFileAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
 
             // Items cannot be partially written if we're checking for their absence,
             // or if we're verifying that the list will show up (without specifying an actual item)
             if (!checkForAbsence && expectedItemOrNull != null)
             {
-                VerifyAtPosition_ItemPartiallyWritten(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
-                VerifyAtEndOfFile_ItemPartiallyWritten(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
+                await VerifyAtPosition_ItemPartiallyWrittenAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
+                await VerifyAtEndOfFile_ItemPartiallyWrittenAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, experimental, glyph);
             }
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void AlwaysVisibleAtAnyLevelItems1()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task AlwaysVisibleAtAnyLevelItems1()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     /// $$
@@ -56,10 +62,10 @@ public class foo
 }", "see", "seealso", "![CDATA[", "!--");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void AlwaysVisibleAtAnyLevelItems2()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task AlwaysVisibleAtAnyLevelItems2()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     /// <summary> $$ </summary>
@@ -67,10 +73,10 @@ public class foo
 }", "see", "seealso", "![CDATA[", "!--");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void AlwaysVisibleNotTopLevelItems1()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task AlwaysVisibleNotTopLevelItems1()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     /// <summary> $$ </summary>
@@ -78,10 +84,10 @@ public class foo
 }", "c", "code", "list", "para", "paramref", "typeparamref");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void AlwaysVisibleNotTopLevelItems2()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task AlwaysVisibleNotTopLevelItems2()
         {
-            VerifyItemsAbsent(@"
+            await VerifyItemsAbsentAsync(@"
 public class foo
 {
     /// $$ 
@@ -89,10 +95,10 @@ public class foo
 }", "c", "code", "list", "para", "paramref", "typeparamref");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void AlwaysVisibleTopLevelOnlyItems1()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task AlwaysVisibleTopLevelOnlyItems1()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     /// $$ 
@@ -100,10 +106,10 @@ public class foo
 }", "exception", "include", "permission");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void AlwaysVisibleTopLevelOnlyItems2()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task AlwaysVisibleTopLevelOnlyItems2()
         {
-            VerifyItemsAbsent(@"
+            await VerifyItemsAbsentAsync(@"
 public class foo
 {
     /// <summary> $$ </summary>
@@ -111,10 +117,10 @@ public class foo
 }", "exception", "include", "permission");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TopLevelSingleUseItems1()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TopLevelSingleUseItems1()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     ///  $$
@@ -122,10 +128,10 @@ public class foo
 }", "example", "remarks", "summary");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TopLevelSingleUseItems2()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TopLevelSingleUseItems2()
         {
-            VerifyItemsAbsent(@"
+            await VerifyItemsAbsentAsync(@"
 public class foo
 {
     ///  <summary> $$ </summary>
@@ -133,10 +139,10 @@ public class foo
 }", "example", "remarks", "summary");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TopLevelSingleUseItems3()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TopLevelSingleUseItems3()
         {
-            VerifyItemsAbsent(@"
+            await VerifyItemsAbsentAsync(@"
 public class foo
 {
     ///  <summary> $$ </summary>
@@ -147,10 +153,10 @@ public class foo
 }", "example", "remarks", "summary");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void OnlyInListItems()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task OnlyInListItems()
         {
-            VerifyItemsAbsent(@"
+            await VerifyItemsAbsentAsync(@"
 public class foo
 {
     ///  <summary> $$ </summary>
@@ -161,10 +167,10 @@ public class foo
 }", "listheader", "item", "term", "description");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void OnlyInListItems2()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task OnlyInListItems2()
         {
-            VerifyItemsAbsent(@"
+            await VerifyItemsAbsentAsync(@"
 public class foo
 {
     ///   $$ 
@@ -173,10 +179,10 @@ public class foo
 }", "listheader", "item", "term", "description");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void OnlyInListItems3()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task OnlyInListItems3()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     ///   <list>$$</list>
@@ -185,10 +191,10 @@ public class foo
 }", "listheader", "item", "term", "description");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void OnlyInListItems4()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task OnlyInListItems4()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     ///   <list><$$</list>
@@ -197,10 +203,10 @@ public class foo
 }", "listheader", "item", "term", "description");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void ListHeaderItems()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task ListHeaderItems()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo
 {
     ///  <summary>
@@ -213,10 +219,10 @@ public class foo
 }", "term", "description");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void VoidMethodDeclarationItems()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task VoidMethodDeclarationItems()
         {
-            VerifyItemIsAbsent(@"
+            await VerifyItemIsAbsentAsync(@"
 public class foo
 {
     
@@ -225,10 +231,10 @@ public class foo
 }", "returns");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void MethodReturns()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task MethodReturns()
         {
-            VerifyItemExists(@"
+            await VerifyItemExistsAsync(@"
 public class foo
 {
     
@@ -237,10 +243,10 @@ public class foo
 }", "returns");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void MethodParamTypeParam()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task MethodParamTypeParam()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
 public class foo<T>
 {
     
@@ -249,10 +255,22 @@ public class foo<T>
 }", "typeparam name=\"T\"", "param name=\"green\"");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void ClassTypeParam()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task IndexerParamTypeParam()
         {
-            VerifyItemsExist(@"
+            await VerifyItemsExistAsync(@"
+public class foo<T>
+{
+
+    /// $$
+    public int this[T green] { get { } set { } }
+}", "param name=\"green\"");
+        }
+
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task ClassTypeParam()
+        {
+            await VerifyItemsExistAsync(@"
 /// $$
 public class foo<T>
 {
@@ -260,8 +278,8 @@ public class foo<T>
 }", "typeparam name=\"T\"");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitSummary()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitSummary()
         {
             var markupBeforeCommit = @"class c
 {
@@ -275,11 +293,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitSummaryOnTab()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitSummaryOnTab()
         {
             var markupBeforeCommit = @"class c
 {
@@ -293,11 +311,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '\t');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '\t');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitSummaryOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitSummaryOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -311,11 +329,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitSummary()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitSummary()
         {
             var markupBeforeCommit = @"class c
 {
@@ -329,11 +347,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitSummaryOnTab()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitSummaryOnTab()
         {
             var markupBeforeCommit = @"class c
 {
@@ -347,11 +365,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '\t');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '\t');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitSummaryOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitSummaryOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -365,11 +383,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitRemarksOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitRemarksOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -383,11 +401,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "remarks", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "remarks", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitRemarksOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitRemarksOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -401,11 +419,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "remarks", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "remarks", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitReturnOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitReturnOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -419,11 +437,11 @@ public class foo<T>
         int foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "returns", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "returns", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitReturnOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitReturnOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -437,11 +455,11 @@ public class foo<T>
         int foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "returns", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "returns", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitExampleOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitExampleOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -455,11 +473,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "example", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "example", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitExampleOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitExampleOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -473,11 +491,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "example", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "example", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitExceptionNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitExceptionNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -491,11 +509,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "exception", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "exception", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitExceptionOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitExceptionOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -509,11 +527,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "exception", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "exception", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitCommentNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitCommentNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -527,11 +545,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "!--", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "!--", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitCommentOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitCommentOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -545,11 +563,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "!--", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "!--", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitCdataNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitCdataNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -563,11 +581,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "![CDATA[", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "![CDATA[", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitCdataOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitCdataOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -581,11 +599,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "![CDATA[", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "![CDATA[", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitIncludeNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitIncludeNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -599,11 +617,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "include", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "include", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitIncludeOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitIncludeOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -617,11 +635,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "include", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "include", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitPermissionNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitPermissionNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -635,11 +653,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "permission", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "permission", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitPermissionOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitPermissionOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -653,11 +671,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "permission", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "permission", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitSeeNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitSeeNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -671,11 +689,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "see", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "see", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitSeeOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitSeeOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -689,11 +707,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "see", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "see", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitSeealsoNoOpenAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitSeealsoNoOpenAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -707,11 +725,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "seealso", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "seealso", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitSeealsoOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitSeealsoOnCloseAngle()
         {
             var markupBeforeCommit = @"class c
 {
@@ -725,11 +743,11 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "seealso", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "seealso", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitParam()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitParam()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -743,11 +761,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitParamOnTab()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitParamOnTab()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -761,11 +779,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '\t');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '\t');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitParamOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitParamOnCloseAngle()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -779,11 +797,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitParam()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitParam()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -797,11 +815,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitParamOnTab()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitParamOnTab()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -815,11 +833,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '\t');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '\t');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitParamOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitParamOnCloseAngle()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -833,11 +851,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "param name=\"bar\"", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void InvokeWithOpenAngleCommitTypeparamOnCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task InvokeWithOpenAngleCommitTypeparamOnCloseAngle()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -851,11 +869,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "typeparam name=\"T\"", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "typeparam name=\"T\"", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitList()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitList()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -873,11 +891,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "list", expectedCodeAfterCommit);
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "list", expectedCodeAfterCommit);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CommitListCloseAngle()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CommitListCloseAngle()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -895,11 +913,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "list", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "list", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TestTagCompletion1()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TestTagCompletion1()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -915,11 +933,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TestTagCompletion2()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TestTagCompletion2()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -937,11 +955,11 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TestTagCompletion3()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TestTagCompletion3()
         {
             var markupBeforeCommit = @"class c<T>
 {
@@ -959,12 +977,12 @@ public class foo<T>
         void foo<T>(T bar) { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "summary", expectedCodeAfterCommit, commitChar: '>');
         }
 
         [WorkItem(623168)]
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void NoTrailingSpace()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task NoTrailingSpace()
         {
             var markupBeforeCommit = @"class c
 {
@@ -978,12 +996,12 @@ public class foo<T>
         void foo() { }
 }";
 
-            VerifyCustomCommitProvider(markupBeforeCommit, "see", expectedCodeAfterCommit, commitChar: ' ');
+            await VerifyCustomCommitProviderAsync(markupBeforeCommit, "see", expectedCodeAfterCommit, commitChar: ' ');
         }
 
         [WorkItem(638802)]
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void TagsAfterSameLineClosedTag()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task TagsAfterSameLineClosedTag()
         {
             var text = @"/// <summary>
 /// <foo></foo>$$
@@ -991,12 +1009,12 @@ public class foo<T>
 /// </summary>
 ";
 
-            VerifyItemsExist(text, "!--", "![CDATA[", "c", "code", "list", "para", "paramref", "seealso", "see", "typeparamref");
+            await VerifyItemsExistAsync(text, "!--", "![CDATA[", "c", "code", "list", "para", "paramref", "seealso", "see", "typeparamref");
         }
 
         [WorkItem(734825)]
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void EnumMember()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task EnumMember()
         {
             var text = @"public enum z
 {
@@ -1008,14 +1026,14 @@ public class foo<T>
 }
 ";
 
-            VerifyItemsExist(text);
+            await VerifyItemsExistAsync(text);
         }
 
         [WorkItem(954679)]
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void CompletionList()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task CompletionList()
         {
-            VerifyItemExists(@"
+            await VerifyItemExistsAsync(@"
 /// $$
 public class foo
 {
@@ -1023,10 +1041,10 @@ public class foo
         }
 
         [WorkItem(775091)]
-        [Fact, Trait(Traits.Feature, Traits.Features.Completion)]
-        public void ParamRefNames()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.Completion)]
+        public async Task ParamRefNames()
         {
-            VerifyItemExists(@"
+            await VerifyItemExistsAsync(@"
 /// <summary>
 /// <paramref name=""$$""/>
 /// </summary>

@@ -182,20 +182,9 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             get { return this.lexer.Options; }
         }
 
-        /// <summary>
-        /// Interactive code - global statements, member declarations and expressions allowed.
-        /// </summary>
-        public bool IsInteractive
-        {
-            get { return Options.Kind == SourceCodeKind.Interactive; }
-        }
-
-        /// <summary>
-        /// Script - global statements and member declarations allowed, but not expressions.
-        /// </summary>
         public bool IsScript
         {
-            get { return Options.Kind != SourceCodeKind.Regular; }
+            get { return Options.Kind == SourceCodeKind.Script; }
         }
 
         protected LexerMode Mode
@@ -843,7 +832,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Syntax.InternalSyntax
             // the error in we'll attach to the node
             SyntaxDiagnosticInfo diagnostic = null;
 
-            // the position of the error within the skipedSyntax node full tree
+            // the position of the error within the skippedSyntax node full tree
             int diagnosticOffset = 0;
 
             int currentOffset = 0;

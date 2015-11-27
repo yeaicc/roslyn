@@ -4,10 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Editor.Implementation.BraceMatching;
 using Microsoft.CodeAnalysis.Editor.Shared.Extensions;
 using Microsoft.CodeAnalysis.Editor.Shared.Tagging;
+using Microsoft.CodeAnalysis.Editor.Tagging;
 using Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces;
+using Microsoft.CodeAnalysis.Shared.TestHooks;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -32,18 +35,24 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.BraceHighlighting
             int position)
         {
             var view = new Mock<ITextView>();
-            var producer = new BraceHighlightingTagProducer(
-                workspace.GetService<IBraceMatchingService>());
+            var producer = new BraceHighlightingViewTaggerProvider(
+                workspace.GetService<IBraceMatchingService>(),
+                workspace.GetService<IForegroundNotificationService>(),
+                AggregateAsynchronousOperationListener.EmptyListeners);
 
-            var document = buffer.CurrentSnapshot.GetRelatedDocumentsWithChanges().FirstOrDefault();
-            return producer.ProduceTagsAsync(document, buffer.CurrentSnapshot, position, CancellationToken.None).Result;
+            var context = new TaggerContext<BraceHighlightTag>(
+                buffer.CurrentSnapshot.GetRelatedDocumentsWithChanges().FirstOrDefault(),
+                buffer.CurrentSnapshot, new SnapshotPoint(buffer.CurrentSnapshot, position));
+            producer.ProduceTagsAsync_ForTestingPurposesOnly(context).Wait();
+
+            return context.tagSpans;
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
-        public void TestCurlies()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
+        public async Task TestCurlies()
         {
             var code = new string[] { "public class C {", "} " };
-            using (var workspace = CSharpWorkspaceFactory.CreateWorkspaceFromLines(code, parseOptions: Options.Script))
+            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromLinesAsync(code, parseOptions: Options.Script))
             {
                 var buffer = workspace.Documents.First().GetTextBuffer();
 
@@ -69,11 +78,11 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.BraceHighlighting
             }
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
-        public void TestTouchingItems()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
+        public async Task TestTouchingItems()
         {
             var code = new string[] { "public class C {", "  public void Foo(){}", "}" };
-            using (var workspace = CSharpWorkspaceFactory.CreateWorkspaceFromLines(code, Options.Script))
+            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromLinesAsync(code, Options.Script))
             {
                 var buffer = workspace.Documents.First().GetTextBuffer();
 
@@ -100,11 +109,11 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.BraceHighlighting
             }
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
-        public void TestAngles()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
+        public async Task TestAngles()
         {
             var code = new string[] { "/// <summary>Foo</summary>", "public class C<T> {", "  void Foo() {", "    bool a = b < c;", "    bool d = e > f;", "  }", "} " };
-            using (var workspace = CSharpWorkspaceFactory.CreateWorkspaceFromLines(code, parseOptions: Options.Script))
+            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromLinesAsync(code, parseOptions: Options.Script))
             {
                 var buffer = workspace.Documents.First().GetTextBuffer();
 
@@ -147,8 +156,8 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.BraceHighlighting
             }
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
-        public void TestSwitch()
+        [WpfFact, Trait(Traits.Feature, Traits.Features.BraceHighlighting)]
+        public async Task TestSwitch()
         {
             var code = @"
 class C
@@ -162,7 +171,7 @@ class C
         }
     }
 } ";
-            using (var workspace = CSharpWorkspaceFactory.CreateWorkspaceFromFile(code, parseOptions: Options.Script))
+            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromFileAsync(code, parseOptions: Options.Script))
             {
                 var buffer = workspace.Documents.First().GetTextBuffer();
 

@@ -22,8 +22,9 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.Formatting.Indentation
             Return s_instance
         End Function
 
-        Protected Overrides Function GetIndenter(document As Document, lineToBeIndented As ITextSnapshotLine, formattingRules As IEnumerable(Of IFormattingRule), optionSet As OptionSet, cancellationToken As CancellationToken) As AbstractIndenter
-            Return New Indenter(document, formattingRules, optionSet, lineToBeIndented, cancellationToken)
+        Protected Overrides Async Function GetIndenterAsync(document As Document, lineToBeIndented As ITextSnapshotLine, formattingRules As IEnumerable(Of IFormattingRule), optionSet As OptionSet, cancellationToken As CancellationToken) As Tasks.Task(Of AbstractIndenter)
+            Dim synDocument = Await SyntacticDocument.CreateAsync(document, cancellationToken).ConfigureAwait(False)
+            Return New Indenter(synDocument, formattingRules, optionSet, lineToBeIndented, cancellationToken)
         End Function
 
         Protected Overrides Function ShouldUseSmartTokenFormatterInsteadOfIndenter(formattingRules As IEnumerable(Of IFormattingRule),
@@ -90,7 +91,8 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.Formatting.Indentation
 
             Dim currentNode = startNode
             Do While currentNode IsNot Nothing
-                Dim operations = FormattingOperations.GetAlignTokensOperations(formattingRules, currentNode, optionSet)
+                Dim operations = FormattingOperations.GetAlignTokensOperations(
+                    formattingRules, currentNode, lastToken:=Nothing, optionSet:=optionSet)
 
                 If Not operations.Any() Then
                     currentNode = currentNode.Parent

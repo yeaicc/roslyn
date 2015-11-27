@@ -866,9 +866,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' Filter out unexpected underlying types for Nullable and enum types
             If ((leftIsEnum OrElse leftIsNullable) AndAlso
-                (leftEnumUnderlying.IsStringType() OrElse leftEnumUnderlying.IsObjectType() OrElse leftEnumUnderlying.IsCharArrayRankOne())) OrElse
+                (leftEnumUnderlying.IsStringType() OrElse leftEnumUnderlying.IsObjectType() OrElse leftEnumUnderlying.IsCharSZArray())) OrElse
                ((rightIsEnum OrElse rightIsNullable) AndAlso
-                (rightEnumUnderlying.IsStringType() OrElse rightEnumUnderlying.IsObjectType() OrElse rightEnumUnderlying.IsCharArrayRankOne())) Then
+                (rightEnumUnderlying.IsStringType() OrElse rightEnumUnderlying.IsObjectType() OrElse rightEnumUnderlying.IsCharSZArray())) Then
                 Return BinaryOperatorKind.Error
             End If
 
@@ -937,11 +937,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 ' Operands of type 1-dimensional array of Char are treated as if they
                 ' were of type String.
-                If leftSpecialType = SpecialType.None AndAlso leftEnumUnderlying.IsCharArrayRankOne() Then
+                If leftSpecialType = SpecialType.None AndAlso leftEnumUnderlying.IsCharSZArray() Then
                     leftSpecialType = SpecialType.System_String
                 End If
 
-                If rightSpecialType = SpecialType.None AndAlso rightEnumUnderlying.IsCharArrayRankOne() Then
+                If rightSpecialType = SpecialType.None AndAlso rightEnumUnderlying.IsCharSZArray() Then
                     rightSpecialType = SpecialType.System_String
                 End If
 
@@ -974,10 +974,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' were of type String.
             If (leftEnumUnderlying.SpecialType <> SpecialType.System_Object AndAlso
                    Not leftEnumUnderlying.IsIntrinsicType() AndAlso
-                   Not leftEnumUnderlying.IsCharArrayRankOne()) OrElse
+                   Not leftEnumUnderlying.IsCharSZArray()) OrElse
                (rightEnumUnderlying.SpecialType <> SpecialType.System_Object AndAlso
                    Not rightEnumUnderlying.IsIntrinsicType() AndAlso
-                   Not rightEnumUnderlying.IsCharArrayRankOne()) OrElse
+                   Not rightEnumUnderlying.IsCharSZArray()) OrElse
                (leftEnumUnderlying.IsDateTimeType() AndAlso rightEnumUnderlying.IsDateTimeType() AndAlso
                    opCode = BinaryOperatorKind.Subtract) Then ' Let (Date - Date) use operator overloading.
                 Return True
@@ -1938,7 +1938,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             '
             ' !!! Dev10 implementation doesn't match the spec here (the behavior is duplicated):
             ' !!! 1) If there were applicable Widening CType operators applicable according to the
-            ' !!!    "Most Specific Widening Conversion" section, Narrowing CType opeartors are not considered at all.
+            ' !!!    "Most Specific Widening Conversion" section, Narrowing CType operators are not considered at all.
             ' !!!    Nullable lifting isn't considered too.
             ' !!! 2) With "Most Specific Narrowing Conversion" behavior is slightly different. If there is a conversion
             ' !!!    operator that converts from the most specific source type to the most specific target type, then
@@ -1988,7 +1988,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 If Not (sourceUnderlying.IsErrorType() OrElse destinationUnderlying.IsErrorType()) Then
                     ' All candidates applicable to the underlying types should be applicable to the original types, no reason to 
-                    ' do viability checks for the secont time.
+                    ' do viability checks for the second time.
 
                     If DetermineMostSpecificWideningConversion(sourceUnderlying, destinationUnderlying, opSet, conversionKinds, applicable, bestMatch, suppressViabilityChecks:=True, useSiteDiagnostics:=useSiteDiagnostics) Then
                         If bestMatch IsNot Nothing Then
@@ -2338,7 +2338,7 @@ Done:
             End If
 
             ' Ignore user defined conversions between types that already have intrinsic conversions.
-            ' This could happen for generics after generic param substituion.
+            ' This could happen for generics after generic param substitution.
             If Not method.ContainingType.IsDefinition Then
                 Dim useSiteDiagnostics As HashSet(Of DiagnosticInfo) = Nothing
                 If Conversions.ConversionExists(Conversions.ClassifyPredefinedConversion(inputType, outputType, useSiteDiagnostics)) OrElse
@@ -2893,7 +2893,7 @@ Next_i:
         End Sub
 
         ''' <summary>
-        ''' Returns True if we should stop climbing inheritence hierarchy.
+        ''' Returns True if we should stop climbing inheritance hierarchy.
         ''' </summary>
         Private Shared Function CollectUserDefinedOperators(
             type As TypeSymbol,
@@ -3392,9 +3392,9 @@ Next_i:
                 End Get
             End Property
 
-            Friend Overrides ReadOnly Property HasByRefBeforeCustomModifiers As Boolean
+            Friend Overrides ReadOnly Property CountOfCustomModifiersPrecedingByRef As UShort
                 Get
-                    Return _parameterToLift.HasByRefBeforeCustomModifiers
+                    Return _parameterToLift.CountOfCustomModifiersPrecedingByRef
                 End Get
             End Property
 

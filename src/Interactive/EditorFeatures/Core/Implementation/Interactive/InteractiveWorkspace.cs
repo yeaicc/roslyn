@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using Microsoft.CodeAnalysis.Editor.Interactive;
+using Microsoft.CodeAnalysis.Editor.Shared.Options;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.SolutionCrawler;
 using Microsoft.CodeAnalysis.Text;
@@ -97,11 +98,6 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.Interactive
         internal void ClearOpenDocument(DocumentId documentId)
         {
             base.ClearOpenDocument(documentId);
-        }
-
-        internal new void RegisterText(SourceTextContainer textContainer)
-        {
-            base.RegisterText(textContainer);
         }
 
         internal new void UnregisterText(SourceTextContainer textContainer)

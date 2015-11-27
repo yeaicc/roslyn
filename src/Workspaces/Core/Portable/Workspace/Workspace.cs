@@ -31,7 +31,7 @@ namespace Microsoft.CodeAnalysis
         private readonly BranchId _primaryBranchId;
 
         // forces serialization of mutation calls from host (OnXXX methods). Must take this lock before taking stateLock.
-        private readonly NonReentrantLock _serializationLock = new NonReentrantLock(useThisInstanceForSynchronization: true);
+        private readonly SemaphoreSlim _serializationLock = new SemaphoreSlim(initialCount: 1);
 
         // this lock guards all the mutable fields (do not share lock with derived classes)
         private readonly NonReentrantLock _stateLock = new NonReentrantLock(useThisInstanceForSynchronization: true);
@@ -59,7 +59,7 @@ namespace Microsoft.CodeAnalysis
             _services = host.CreateWorkspaceServices(this);
 
             // queue used for sending events
-            var workspaceTaskSchedulerFactory = _services.GetService<IWorkspaceTaskSchedulerFactory>();
+            var workspaceTaskSchedulerFactory = _services.GetRequiredService<IWorkspaceTaskSchedulerFactory>();
             _taskQueue = workspaceTaskSchedulerFactory.CreateTaskQueue();
 
             // initialize with empty solution
@@ -799,6 +799,73 @@ namespace Microsoft.CodeAnalysis
             }
         }
 
+        /// <summary>
+        /// Updates all projects to properly reference other projects as project references instead of metadata references.
+        /// </summary>
+        protected void UpdateReferencesAfterAdd()
+        {
+            using (_serializationLock.DisposableWait())
+            {
+                var oldSolution = this.CurrentSolution;
+                var newSolution = this.UpdateReferencesAfterAdd(oldSolution);
+
+                if (newSolution != oldSolution)
+                {
+                    newSolution = this.SetCurrentSolution(newSolution);
+                    var ignore = this.RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.SolutionChanged, oldSolution, newSolution);
+                }
+            }
+        }
+
+        private Solution UpdateReferencesAfterAdd(Solution solution)
+        {
+            // Build map from output assembly path to ProjectId
+            // Use explicit loop instead of ToDictionary so we don't throw if multiple projects have same output assembly path.
+            var outputAssemblyToProjectIdMap = new Dictionary<string, ProjectId>();
+            foreach (var p in solution.Projects)
+            {
+                if (!string.IsNullOrEmpty(p.OutputFilePath))
+                {
+                    outputAssemblyToProjectIdMap[p.OutputFilePath] = p.Id;
+                }
+            }
+
+            // now fix each project if necessary
+            foreach (var pid in solution.ProjectIds)
+            {
+                var project = solution.GetProject(pid);
+
+                // convert metadata references to project references if the metadata reference matches some project's output assembly.
+                foreach (var meta in project.MetadataReferences)
+                {
+                    var pemeta = meta as PortableExecutableReference;
+                    if (pemeta != null)
+                    {
+                        ProjectId matchingProjectId;
+
+                        // check both Display and FilePath. FilePath points to the actually bits, but Display should match output path if 
+                        // the metadata reference is shadow copied.
+                        if ((!string.IsNullOrEmpty(pemeta.Display) && outputAssemblyToProjectIdMap.TryGetValue(pemeta.Display, out matchingProjectId)) ||
+                            (!string.IsNullOrEmpty(pemeta.FilePath) && outputAssemblyToProjectIdMap.TryGetValue(pemeta.FilePath, out matchingProjectId)))
+                        {
+                            var newProjRef = new ProjectReference(matchingProjectId, pemeta.Properties.Aliases, pemeta.Properties.EmbedInteropTypes);
+
+                            if (!project.ProjectReferences.Contains(newProjRef))
+                            {
+                                project = project.WithProjectReferences(project.ProjectReferences.Concat(newProjRef));
+                            }
+
+                            project = project.WithMetadataReferences(project.MetadataReferences.Where(mr => mr != meta));
+                        }
+                    }
+                }
+
+                solution = project.Solution;
+            }
+
+            return solution;
+        }
+
         #endregion
 
         #region Apply Changes
@@ -1066,7 +1133,7 @@ namespace Microsoft.CodeAnalysis
                 if (!oldDoc.TryGetText(out oldText))
                 {
                     // we can't get old text, there is not much we can do except replacing whole text.
-                    var currentText = newDoc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait
+                    var currentText = newDoc.GetTextAsync(CancellationToken.None).WaitAndGetResult_CanCallOnBackground(CancellationToken.None); // needs wait
                     this.ApplyDocumentTextChanged(documentId, currentText);
                     continue;
                 }
@@ -1076,7 +1143,7 @@ namespace Microsoft.CodeAnalysis
                 if (!newDoc.TryGetText(out newText))
                 {
                     // okay, we have old text, but no new text. let document determine text changes
-                    var textChanges = newDoc.GetTextChangesAsync(oldDoc, CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait
+                    var textChanges = newDoc.GetTextChangesAsync(oldDoc, CancellationToken.None).WaitAndGetResult_CanCallOnBackground(CancellationToken.None); // needs wait
                     this.ApplyDocumentTextChanged(documentId, oldText.WithChanges(textChanges));
                     continue;
                 }
@@ -1092,7 +1159,7 @@ namespace Microsoft.CodeAnalysis
                 var newDoc = projectChanges.NewProject.GetAdditionalDocument(documentId);
 
                 // We don't understand the text of additional documents and so we just replace the entire text.
-                var currentText = newDoc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait
+                var currentText = newDoc.GetTextAsync(CancellationToken.None).WaitAndGetResult_CanCallOnBackground(CancellationToken.None); // needs wait
                 this.ApplyAdditionalDocumentTextChanged(documentId, currentText);
             }
         }
@@ -1127,7 +1194,7 @@ namespace Microsoft.CodeAnalysis
 
         private SourceText GetTextForced(TextDocument doc)
         {
-            return doc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None); // needs wait (called during TryApplyChanges)
+            return doc.GetTextAsync(CancellationToken.None).WaitAndGetResult_CanCallOnBackground(CancellationToken.None); // needs wait (called during TryApplyChanges)
         }
 
         private DocumentInfo CreateDocumentInfoWithText(TextDocument doc)

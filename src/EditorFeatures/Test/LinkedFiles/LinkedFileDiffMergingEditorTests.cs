@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Editor.UnitTests.CodeActions;
 using Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces;
+using Roslyn.Test.Utilities;
 using Roslyn.Utilities;
 using Xunit;
 
@@ -33,16 +34,16 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.LinkedFiles
             return new CodeRefactoringProvider();
         }
 
-        [Fact]
-        public void TestCodeActionPreviewAndApply()
+        [WpfFact]
+        public async Task TestCodeActionPreviewAndApply()
         {
-            using (var workspace = TestWorkspaceFactory.CreateWorkspace(WorkspaceXml))
+            using (var workspace = await TestWorkspaceFactory.CreateWorkspaceAsync(WorkspaceXml))
             {
-                var codeIssueOrRefactoring = GetCodeRefactoring(workspace, null);
+                var codeIssueOrRefactoring = GetCodeRefactoring(workspace);
 
                 var expectedCode = "private class D { }";
 
-                TestActionsOnLinkedFiles(
+                await TestActionsOnLinkedFiles(
                     workspace,
                     expectedText: expectedCode,
                     index: 0,
@@ -51,10 +52,10 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.LinkedFiles
             }
         }
 
-        [Fact]
-        public void TestWorkspaceTryApplyChangesDirectCall()
+        [WpfFact]
+        public async Task TestWorkspaceTryApplyChangesDirectCall()
         {
-            using (var workspace = TestWorkspaceFactory.CreateWorkspace(WorkspaceXml))
+            using (var workspace = await TestWorkspaceFactory.CreateWorkspaceAsync(WorkspaceXml))
             {
                 var solution = workspace.CurrentSolution;
 
@@ -76,7 +77,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.LinkedFiles
             }
         }
 
-        protected override TestWorkspace CreateWorkspaceFromFile(string definition, ParseOptions parseOptions, CompilationOptions compilationOptions)
+        protected override Task<TestWorkspace> CreateWorkspaceFromFileAsync(string definition, ParseOptions parseOptions, CompilationOptions compilationOptions)
         {
             throw new NotSupportedException();
         }

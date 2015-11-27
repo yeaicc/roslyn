@@ -2617,7 +2617,7 @@ End Module
             Assert.True(semanticInfo.ImplicitConversion.IsWidening AndAlso semanticInfo.ImplicitConversion.IsReference, "Expected WideningReference")
             Assert.Equal(semanticInfo.ImplicitConversion, conv)
 
-            ' Auto-impled
+            ' Auto-implemented
             argList = DirectCast(CompilationUtils.FindNodeFromText(tree, "(AP)"), ArgumentListSyntax)
             arg = DirectCast(argList.ChildNodes().First(), SimpleArgumentSyntax).Expression
 
@@ -4111,7 +4111,7 @@ BC30002: Type 'A' is not defined.
             CompilationUtils.AssertTheseDiagnostics(errs, ExpectedErrors)
 
             'namespace starting with a string Global but not specifically Global.
-            Dim sourceWithaNameStartingGlobal = <compilation>
+            Dim sourceWithANameStartingGlobal = <compilation>
                                                     <file name="a.vb"><![CDATA[
             Namespace GlobalFoo
               Class C
@@ -4123,12 +4123,12 @@ BC30002: Type 'A' is not defined.
             End Namespace
                             ]]></file>
                                                 </compilation>
-            compilation = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(sourceWithaNameStartingGlobal, Nothing)
+            compilation = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(sourceWithANameStartingGlobal, Nothing)
             semanticModel = GetSemanticModel(compilation, "a.vb")
             errs = semanticModel.GetMethodBodyDiagnostics()
             CompilationUtils.AssertTheseDiagnostics(errs, ExpectedErrors)
 
-            compilation = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(sourceWithaNameStartingGlobal, Nothing, TestOptions.ReleaseDll.WithRootNamespace("ClassLibrary1"))
+            compilation = CreateCompilationWithMscorlibAndVBRuntimeAndReferences(sourceWithANameStartingGlobal, Nothing, TestOptions.ReleaseDll.WithRootNamespace("ClassLibrary1"))
             semanticModel = GetSemanticModel(compilation, "a.vb")
             errs = semanticModel.GetMethodBodyDiagnostics()
             CompilationUtils.AssertTheseDiagnostics(errs, ExpectedErrors)

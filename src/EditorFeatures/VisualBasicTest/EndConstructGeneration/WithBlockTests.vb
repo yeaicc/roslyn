@@ -1,5 +1,6 @@
 ' Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+Imports System.Threading.Tasks
 Imports Microsoft.CodeAnalysis.Editor.VisualBasic.EndConstructGeneration
 Imports Microsoft.CodeAnalysis.Text
 Imports Microsoft.CodeAnalysis.VisualBasic
@@ -11,9 +12,9 @@ Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGeneration
     Public Class WithBlockTests
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub ApplyAfterWithStatement()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function ApplyAfterWithStatement() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class c1",
                          "Sub foo()",
                          "With variable",
@@ -28,11 +29,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "End Sub",
                         "End Class"},
                 afterCaret:={3, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub DontApplyForMatchedWith()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function DontApplyForMatchedWith() As Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class c1",
                        "Sub foo()",
                        "With variable",
@@ -40,11 +41,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                        "End Sub",
                        "End Class"},
                 caret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyNestedWith()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyNestedWith() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class C",
                          "    Sub S",
                          "        With K",
@@ -63,11 +64,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                          "    End Sub",
                          "End Class"},
                 afterCaret:={4, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyWithFollowsCode()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyWithFollowsCode() As Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class C",
                          "    Sub S",
                          "        With K",
@@ -84,27 +85,26 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                          "    End Sub",
                          "End Class"},
                 afterCaret:={3, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInvalidWithSyntax()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInvalidWithSyntax() As Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class EC",
                        "    Sub S",
                        "        With using",
                        "    End Sub",
                        "End Class"},
                 caret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInvalidWithLocation()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInvalidWithLocation() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class EC",
                        "    With True",
                        "End Class"},
                 caret:={1, -1})
-        End Sub
-
+        End Function
     End Class
 End Namespace

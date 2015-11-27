@@ -805,7 +805,7 @@ LessThanSlashTokenCase:
                     Return SyntaxFactory.XmlElementStartTag(lessThan, Name, attributes, greaterThan)
 
                 Case Else
-                    ' Try to avoid spurios missing '>' error message. Only report error if no skipped text
+                    ' Try to avoid spurious missing '>' error message. Only report error if no skipped text
                     ' and attributes are error free.
                     greaterThan = InternalSyntaxFactory.MissingPunctuation(SyntaxKind.GreaterThanToken)
 
@@ -1705,7 +1705,7 @@ lFailed:
 
                 If CurrentToken.Kind = SyntaxKind.DocumentationCommentLineBreakToken Then
                     Dim tempNodes = ParseXmlContent(ScannerState.Content)
-                    Debug.Assert(tempNodes.Nodes.Count = 1)
+                    Debug.Assert(tempNodes.Nodes.Length = 1)
 
                     For Each node In tempNodes.Nodes
                         content.Add(DirectCast(node, XmlNodeSyntax))

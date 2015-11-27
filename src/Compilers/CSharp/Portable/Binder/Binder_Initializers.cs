@@ -23,14 +23,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             SynthesizedInteractiveInitializerMethod scriptInitializerOpt,
             ImmutableArray<ImmutableArray<FieldOrPropertyInitializer>> fieldInitializers,
             DiagnosticBag diagnostics,
-            bool setReturnType, // Remove once static fields are errors in submissions.
             ref ProcessedFieldInitializers processedInitializers)
         {
-            if (setReturnType && ((object)scriptInitializerOpt != null))
-            {
-                SetScriptInitializerReturnType(compilation, scriptInitializerOpt, fieldInitializers, diagnostics);
-            }
-
             var diagsForInstanceInitializers = DiagnosticBag.GetInstance();
             ImportChain firstImportChain;
             processedInitializers.BoundInitializers = BindFieldInitializers(compilation, scriptInitializerOpt, fieldInitializers, diagsForInstanceInitializers, out firstImportChain);
@@ -63,71 +57,6 @@ namespace Microsoft.CodeAnalysis.CSharp
                 BindScriptFieldInitializers(compilation, scriptInitializerOpt, initializers, boundInitializers, diagnostics, out firstImportChain);
             }
             return boundInitializers.ToImmutableAndFree();
-        }
-
-        private static void SetScriptInitializerReturnType(
-            CSharpCompilation compilation,
-            SynthesizedInteractiveInitializerMethod scriptInitializer,
-            ImmutableArray<ImmutableArray<FieldOrPropertyInitializer>> fieldInitializers,
-            DiagnosticBag diagnostics)
-        {
-            bool isAsync = scriptInitializer.IsSubmissionInitializer && fieldInitializers.Any(i => i.Any(ContainsAwaitsVisitor.ContainsAwait));
-            var resultType = scriptInitializer.ResultType;
-            TypeSymbol returnType;
-
-            if ((object)resultType == null)
-            {
-                Debug.Assert(!isAsync);
-                returnType = compilation.GetSpecialType(SpecialType.System_Void);
-            }
-            else if (!isAsync)
-            {
-                returnType = resultType;
-            }
-            else
-            {
-                var taskT = compilation.GetWellKnownType(WellKnownType.System_Threading_Tasks_Task_T);
-                var useSiteDiagnostic = taskT.GetUseSiteDiagnostic();
-                if (useSiteDiagnostic != null)
-                {
-                    diagnostics.Add(useSiteDiagnostic, NoLocation.Singleton);
-                }
-                returnType = taskT.Construct(resultType);
-            }
-
-            scriptInitializer.SetReturnType(isAsync, returnType);
-        }
-
-        private sealed class ContainsAwaitsVisitor : CSharpSyntaxWalker
-        {
-            private bool _containsAwait;
-
-            internal static bool ContainsAwait(FieldOrPropertyInitializer initializer)
-            {
-                var syntax = initializer.Syntax.GetSyntax();
-                var visitor = new ContainsAwaitsVisitor();
-                visitor.Visit(syntax);
-                return visitor._containsAwait;
-            }
-
-            public override void VisitAwaitExpression(AwaitExpressionSyntax node)
-            {
-                _containsAwait = true;
-            }
-
-            public override void DefaultVisit(SyntaxNode node)
-            {
-                switch (node.Kind())
-                {
-                    case SyntaxKind.SimpleLambdaExpression:
-                    case SyntaxKind.ParenthesizedLambdaExpression:
-                        // Do not walk into lambdas.
-                        break;
-                    default:
-                        base.DefaultVisit(node);
-                        break;
-                }
-            }
         }
 
         /// <summary>
@@ -178,7 +107,7 @@ namespace Microsoft.CodeAnalysis.CSharp
                             firstDebugImports = parentBinder.ImportChain;
                         }
 
-                        parentBinder = new LocalScopeBinder(parentBinder).WithAdditionalFlagsAndContainingMemberOrLambda(parentBinder.Flags | BinderFlags.FieldInitializer, fieldSymbol);
+                        parentBinder = new LocalScopeBinder(parentBinder).WithAdditionalFlagsAndContainingMemberOrLambda(BinderFlags.FieldInitializer, fieldSymbol);
 
                         BoundFieldInitializer boundInitializer = BindFieldInitializer(parentBinder, fieldSymbol, initializerNode, diagnostics);
                         boundInitializers.Add(boundInitializer);
@@ -209,6 +138,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                 // factory across siblings.  Unfortunately, we cannot reuse the binder itself, because
                 // individual fields might have their own binders (e.g. because of being declared unsafe).
                 BinderFactory binderFactory = null;
+                // Label instances must be shared across all global statements.
+                ScriptLocalScopeBinder.Labels labels = null;
 
                 for (int j = 0; j < siblingInitializers.Length; j++)
                 {
@@ -222,44 +153,47 @@ namespace Microsoft.CodeAnalysis.CSharp
                     }
 
                     var syntaxRef = initializer.Syntax;
-                    Debug.Assert(syntaxRef.SyntaxTree.Options.Kind != SourceCodeKind.Regular);
+                    var syntaxTree = syntaxRef.SyntaxTree;
+                    Debug.Assert(syntaxTree.Options.Kind != SourceCodeKind.Regular);
 
-                    var initializerNode = (CSharpSyntaxNode)syntaxRef.GetSyntax();
+                    var syntax = (CSharpSyntaxNode)syntaxRef.GetSyntax();
+                    var syntaxRoot = syntaxTree.GetCompilationUnitRoot();
 
                     if (binderFactory == null)
                     {
-                        binderFactory = compilation.GetBinderFactory(syntaxRef.SyntaxTree);
+                        binderFactory = compilation.GetBinderFactory(syntaxTree);
+                        labels = new ScriptLocalScopeBinder.Labels(scriptInitializer, syntaxRoot);
                     }
 
-                    Binder scriptClassBinder = binderFactory.GetBinder(initializerNode);
-                    Debug.Assert(((ImplicitNamedTypeSymbol)scriptClassBinder.ContainingMemberOrLambda).IsScriptClass);
+                    Binder scriptClassBinder = binderFactory.GetBinder(syntax);
+                    Debug.Assert(((NamedTypeSymbol)scriptClassBinder.ContainingMemberOrLambda).IsScriptClass);
 
                     if (firstDebugImports == null)
                     {
                         firstDebugImports = scriptClassBinder.ImportChain;
                     }
 
-                    Binder parentBinder = new ExecutableCodeBinder((CSharpSyntaxNode)syntaxRef.SyntaxTree.GetRoot(), scriptInitializer, scriptClassBinder);
+                    Binder parentBinder = new ExecutableCodeBinder(
+                        syntaxRoot,
+                        scriptInitializer,
+                        new ScriptLocalScopeBinder(labels, scriptClassBinder));
 
                     BoundInitializer boundInitializer;
                     if ((object)fieldSymbol != null)
                     {
                         boundInitializer = BindFieldInitializer(
-                            new LocalScopeBinder(parentBinder).WithAdditionalFlagsAndContainingMemberOrLambda(parentBinder.Flags | BinderFlags.FieldInitializer, fieldSymbol),
+                            parentBinder.WithAdditionalFlagsAndContainingMemberOrLambda(BinderFlags.FieldInitializer, fieldSymbol),
                             fieldSymbol,
-                            (EqualsValueClauseSyntax)initializerNode,
+                            (EqualsValueClauseSyntax)syntax,
                             diagnostics);
-                    }
-                    else if (initializerNode.Kind() == SyntaxKind.LabeledStatement)
-                    {
-                        // TODO: labels in interactive
-                        var boundStatement = new BoundBadStatement(initializerNode, ImmutableArray<BoundNode>.Empty, true);
-                        boundInitializer = new BoundGlobalStatementInitializer(initializerNode, boundStatement);
                     }
                     else
                     {
-                        var collisionDetector = new LocalScopeBinder(parentBinder);
-                        boundInitializer = BindGlobalStatement(collisionDetector, (StatementSyntax)initializerNode, diagnostics,
+                        boundInitializer = BindGlobalStatement(
+                            parentBinder,
+                            scriptInitializer,
+                            (StatementSyntax)syntax,
+                            diagnostics,
                             isLast: i == initializers.Length - 1 && j == siblingInitializers.Length - 1);
                     }
 
@@ -268,24 +202,47 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
         }
 
-        private static BoundInitializer BindGlobalStatement(Binder binder, StatementSyntax statementNode, DiagnosticBag diagnostics, bool isLast)
+        private static BoundInitializer BindGlobalStatement(
+            Binder binder,
+            SynthesizedInteractiveInitializerMethod scriptInitializer,
+            StatementSyntax statementNode,
+            DiagnosticBag diagnostics,
+            bool isLast)
         {
-            BoundStatement boundStatement = binder.BindStatement(statementNode, diagnostics);
-
-            // the result of the last global expression is assigned to the result storage for submission result:
-            if (binder.Compilation.IsSubmission && isLast && boundStatement.Kind == BoundKind.ExpressionStatement && !boundStatement.HasAnyErrors)
+            var statement = binder.BindStatement(statementNode, diagnostics);
+            if (isLast && !statement.HasAnyErrors)
             {
-                // insert an implicit conversion for the submission return type (if needed):
-                var expression = ((BoundExpressionStatement)boundStatement).Expression;
-                if ((object)expression.Type == null || expression.Type.SpecialType != SpecialType.System_Void)
+                // the result of the last global expression is assigned to the result storage for submission result:
+                if (binder.Compilation.IsSubmission)
                 {
-                    var submissionResultType = binder.Compilation.GetSubmissionInitializer().ResultType;
-                    expression = binder.GenerateConversionForAssignment(submissionResultType, expression, diagnostics);
-                    boundStatement = new BoundExpressionStatement(boundStatement.Syntax, expression, expression.HasErrors);
+                    // insert an implicit conversion for the submission return type (if needed):
+                    var expression = InitializerRewriter.GetTrailingScriptExpression(statement);
+                    if (expression != null &&
+                        ((object)expression.Type == null || expression.Type.SpecialType != SpecialType.System_Void))
+                    {
+                        var submissionResultType = scriptInitializer.ResultType;
+                        expression = binder.GenerateConversionForAssignment(submissionResultType, expression, diagnostics);
+                        statement = new BoundExpressionStatement(statement.Syntax, expression, expression.HasErrors);
+                    }
+                }
+
+                // don't allow trailing expressions after labels (as in regular C#, labels must be followed by a statement):
+                if (statement.Kind == BoundKind.LabeledStatement)
+                {
+                    var labeledStatementBody = ((BoundLabeledStatement)statement).Body;
+                    while (labeledStatementBody.Kind == BoundKind.LabeledStatement)
+                    {
+                        labeledStatementBody = ((BoundLabeledStatement)labeledStatementBody).Body;
+                    }
+
+                    if (InitializerRewriter.GetTrailingScriptExpression(labeledStatementBody) != null)
+                    {
+                        Error(diagnostics, ErrorCode.ERR_SemicolonExpected, ((ExpressionStatementSyntax)labeledStatementBody.Syntax).SemicolonToken);
+                    }
                 }
             }
 
-            return new BoundGlobalStatementInitializer(statementNode, boundStatement);
+            return new BoundGlobalStatementInitializer(statementNode, statement);
         }
 
         private static BoundFieldInitializer BindFieldInitializer(Binder binder, FieldSymbol fieldSymbol, EqualsValueClauseSyntax equalsValueClauseNode,

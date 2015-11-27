@@ -11,9 +11,9 @@ Imports Roslyn.Test.Utilities
 
 Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGeneration
     Public Class WhileLoopTests
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub ApplyAfterWithStatement()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function ApplyAfterWithStatement() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class c1",
                          "Sub foo()",
                          "While variable",
@@ -28,11 +28,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                         "End Sub",
                         "End Class"},
                 afterCaret:={3, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub DontApplyForMatchedWith()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function DontApplyForMatchedWith() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class c1",
                        "Sub foo()",
                        "While variable",
@@ -40,11 +40,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                        "End Sub",
                        "End Class"},
                 caret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyNestedWhileBlock()
-            VerifyStatementEndConstructApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyNestedWhileBlock() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructAppliedAsync(
                 before:={"Class C",
                          "    Sub S",
                          "        While True",
@@ -65,11 +65,11 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                          "    End Sub",
                          "End Class"},
                 afterCaret:={4, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyRecommitWhileBlock()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyRecommitWhileBlock() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class C",
                        "    Sub S",
                        "        While [while] = [while]",
@@ -77,27 +77,26 @@ Namespace Microsoft.CodeAnalysis.Editor.VisualBasic.UnitTests.EndConstructGenera
                        "    End Sub",
                        "End Class"},
                 caret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInvalidWhileSyntax()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInvalidWhileSyntax() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class EC",
                        "    Sub S",
                        "        While asdf asdf asd",
                        "    End Sub",
                        "End Class"},
                 caret:={2, -1})
-        End Sub
+        End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
-        Public Sub VerifyInvalidWhileLocation()
-            VerifyStatementEndConstructNotApplied(
+        <WpfFact, Trait(Traits.Feature, Traits.Features.EndConstructGeneration)>
+        Public Async Function VerifyInvalidWhileLocation() As Threading.Tasks.Task
+            Await VerifyStatementEndConstructNotAppliedAsync(
                 text:={"Class EC",
                        "    While True",
                        "End Class"},
                 caret:={1, -1})
-        End Sub
-
+        End Function
     End Class
 End Namespace

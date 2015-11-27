@@ -189,7 +189,6 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
             var containingScopes = ArrayBuilder<ISymUnmanagedScope>.GetInstance();
             typedSymReader.GetScopes(methodToken, methodVersion, ilOffset, IsLocalScopeEndInclusive, allScopes, containingScopes);
             var methodContextReuseConstraints = allScopes.GetReuseConstraints(moduleVersionId, methodToken, methodVersion, ilOffset, IsLocalScopeEndInclusive);
-            allScopes.Free();
 
             var localNames = containingScopes.GetLocalNames();
 
@@ -201,7 +200,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                 try
                 {
                     // TODO (https://github.com/dotnet/roslyn/issues/702): switch on the type of typedSymReader and call the appropriate helper.
-                    methodDebugInfo = typedSymReader.GetMethodDebugInfo(methodToken, methodVersion, localNames.FirstOrDefault());
+                    methodDebugInfo = typedSymReader.GetMethodDebugInfo(methodToken, methodVersion, allScopes);
                     var inScopeHoistedLocalIndices = methodDebugInfo.GetInScopeHoistedLocalIndices(ilOffset, ref methodContextReuseConstraints);
                     inScopeHoistedLocals = new CSharpInScopeHoistedLocals(inScopeHoistedLocalIndices);
                 }
@@ -210,6 +209,8 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                     // bad CDI, ignore
                 }
             }
+
+            allScopes.Free();
 
             var methodHandle = (MethodDefinitionHandle)MetadataTokens.Handle(methodToken);
             var currentFrame = compilation.GetMethod(moduleVersionId, methodHandle);
@@ -311,33 +312,29 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
             DiagnosticBag diagnostics,
             out ReadOnlyCollection<string> formatSpecifiers)
         {
-            if (treatAsExpression)
+            if (!treatAsExpression)
             {
-                return expr.ParseExpression(diagnostics, allowFormatSpecifiers: true, formatSpecifiers: out formatSpecifiers);
-            }
-            else
-            {
-                // Try to parse as an expression. If that fails, parse as a statement.
-                var exprDiagnostics = DiagnosticBag.GetInstance();
-                ReadOnlyCollection<string> exprFormatSpecifiers;
-                CSharpSyntaxNode syntax = expr.ParseExpression(exprDiagnostics, allowFormatSpecifiers: true, formatSpecifiers: out exprFormatSpecifiers);
-                Debug.Assert((syntax == null) || !exprDiagnostics.HasAnyErrors());
-                exprDiagnostics.Free();
-                if (syntax != null)
+                // Try to parse as a statement. If that fails, parse as an expression.
+                var statementDiagnostics = DiagnosticBag.GetInstance();
+                var statementSyntax = expr.ParseStatement(statementDiagnostics);
+                Debug.Assert((statementSyntax == null) || !statementDiagnostics.HasAnyErrors());
+                statementDiagnostics.Free();
+
+                if (statementSyntax != null && !statementSyntax.IsKind(SyntaxKind.ExpressionStatement)) // Prefer to parse expression statements as expressions.
                 {
-                    Debug.Assert(!diagnostics.HasAnyErrors());
-                    formatSpecifiers = exprFormatSpecifiers;
-                    return syntax;
-                }
-                formatSpecifiers = null;
-                syntax = expr.ParseStatement(diagnostics);
-                if ((syntax != null) && (syntax.Kind() != SyntaxKind.LocalDeclarationStatement))
-                {
+                    formatSpecifiers = null;
+
+                    if (statementSyntax.IsKind(SyntaxKind.LocalDeclarationStatement))
+                    {
+                        return statementSyntax;
+                    }
+
                     diagnostics.Add(ErrorCode.ERR_ExpressionOrDeclarationExpected, Location.None);
                     return null;
                 }
-                return syntax;
             }
+
+            return expr.ParseExpression(diagnostics, allowFormatSpecifiers: true, formatSpecifiers: out formatSpecifiers);
         }
 
         internal override CompileResult CompileAssignment(
@@ -506,7 +503,7 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
         private static void GetConstants(
             ArrayBuilder<LocalSymbol> builder,
             MethodSymbol method,
-            IEnumerable<ISymUnmanagedScope> scopes,
+            ArrayBuilder<ISymUnmanagedScope> scopes,
             MetadataDecoder metadataDecoder,
             ImmutableDictionary<string, ImmutableArray<bool>> dynamicLocalConstantMap,
             SourceAssemblySymbol containingAssembly)
@@ -523,6 +520,10 @@ namespace Microsoft.CodeAnalysis.CSharp.ExpressionEvaluator
                     Debug.Assert(!info.IsByRef);
                     Debug.Assert(!info.IsPinned);
                     var type = info.Type;
+                    if (type.IsErrorType())
+                    {
+                        continue;
+                    }
 
                     var constantValue = PdbHelpers.GetConstantValue(type.EnumUnderlyingType(), rawValue);
 

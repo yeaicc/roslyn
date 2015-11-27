@@ -210,7 +210,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             CompileAndVerify(comp, verify: false, symbolValidator: m =>
             {
                 var utf8 = new System.Text.UTF8Encoding(false, false);
-                Assert.True(utf8.GetString(utf8.GetBytes("\uD800")) == m.ContainingAssembly.Identity.CultureName);
+                Assert.Equal(utf8.GetString(utf8.GetBytes("\uD800")), m.ContainingAssembly.Identity.CultureName);
             });
         }
 
@@ -449,7 +449,7 @@ public class neutral
             var hash_module = TestReferences.SymbolsTests.netModule.hash_module;
 
             var hash_resources = new[] {new ResourceDescription("hash_resource", "snKey.snk",
-                () => new MemoryStream(TestResources.SymbolsTests.General.snKey, writable: false),
+                () => new MemoryStream(TestResources.General.snKey, writable: false),
                 true)};
 
             CSharpCompilation compilation;
@@ -809,9 +809,7 @@ public class C {}
             {
                 var peReader = metadata.MetadataReader;
                 AssemblyDefinition row = peReader.GetAssemblyDefinition();
-
-                if (verifier != null)
-                    verifier(row);
+                verifier?.Invoke(row);
 
                 // Locale
                 // temp

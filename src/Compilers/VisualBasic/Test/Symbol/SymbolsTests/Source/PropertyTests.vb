@@ -555,7 +555,7 @@ End Class
         ' All property overload metadata should have a name that matches the casing the of the first declared overload
         <WorkItem(539893, "DevDiv")>
         <Fact()>
-        Public Sub PropertiesILCaseSenstivity()
+        Public Sub PropertiesILCaseSensitivity()
             Dim source =
             <compilation>
                 <file name="a.vb">
@@ -2783,7 +2783,7 @@ End Module
 
             ' TODO: There are two issues (differences from Dev10) with the following:
             ' 1) We're currently using the property parameter name rather than the
-            ' accessor parametername in "Argument not specified for parameter '...'".
+            ' accessor parameter name in "Argument not specified for parameter '...'".
             ' 2) Not all the bogus properties are supported.
 #If False Then
             CompilationUtils.AssertTheseErrors(compilation,
@@ -3897,7 +3897,7 @@ BC30545: Property access must assign to the property or use its value.
 
         <WorkItem(539957, "DevDiv")>
         <Fact>
-        Public Sub FunctionWithZeroParametersReturingDelegate()
+        Public Sub FunctionWithZeroParametersReturningDelegate()
             Dim source =
 <compilation>
     <file name="a.vb">
@@ -8186,7 +8186,7 @@ End Class
             End If
         End Sub
 
-        Private Shared Sub VeryifyPropertiesParametersTypes([property] As PropertySymbol, ParamArray expectedTypes() As TypeSymbol)
+        Private Shared Sub VerifyPropertiesParametersTypes([property] As PropertySymbol, ParamArray expectedTypes() As TypeSymbol)
             Assert.Equal([property].SetMethod.Parameters.Last().Type, [property].Type)
             Assert.True((From param In [property].Parameters Select param.Type).SequenceEqual(expectedTypes))
 

@@ -662,7 +662,7 @@ End Class
         Public Sub TestDataFlowForValueTypes()
 
             ' WARNING: test matches the same test in C# (TestDataFlowForValueTypes)
-            '          Keep the two tests in synch!
+            '          Keep the two tests in sync!
 
             Dim analysis = CompileAndAnalyzeDataFlow(
       <compilation name="TestDataFlowForValueTypes">
@@ -3463,10 +3463,10 @@ End Class
 
         <WorkItem(539286, "DevDiv")>
         <Fact()>
-        Public Sub RegionAnalysisInPtopertyInitializers_Simple()
+        Public Sub RegionAnalysisInPropertyInitializers_Simple()
 
             Dim dataResults1 = CompileAndAnalyzeDataFlow(
-<compilation name="RegionAnalysisInPtopertyInitializers_Simple">
+<compilation>
     <file name="a.b">
 Class Class1
     Public Shared A As Integer = 10

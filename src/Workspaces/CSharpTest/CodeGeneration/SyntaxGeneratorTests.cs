@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
@@ -41,6 +42,13 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.Editting
         {
             Assert.IsAssignableFrom(typeof(TSyntax), node);
             var normalized = node.NormalizeWhitespace().ToFullString();
+            Assert.Equal(expectedText, normalized);
+        }
+
+        private void VerifySyntaxRaw<TSyntax>(SyntaxNode node, string expectedText) where TSyntax : SyntaxNode
+        {
+            Assert.IsAssignableFrom(typeof(TSyntax), node);
+            var normalized = node.ToFullString();
             Assert.Equal(expectedText, normalized);
         }
 
@@ -304,6 +312,18 @@ public class MyAttribute : Attribute { public int Value {get; set;} }",
             VerifySyntax<MemberAccessExpressionSyntax>(_g.MemberAccessExpression(_g.ElementAccessExpression(_g.IdentifierName("x"), _g.IdentifierName("y")), _g.IdentifierName("z")), "x[y].z");
             VerifySyntax<MemberAccessExpressionSyntax>(_g.MemberAccessExpression(_g.AddExpression(_g.IdentifierName("x"), _g.IdentifierName("y")), _g.IdentifierName("z")), "((x) + (y)).z");
             VerifySyntax<MemberAccessExpressionSyntax>(_g.MemberAccessExpression(_g.NegateExpression(_g.IdentifierName("x")), _g.IdentifierName("y")), "(-(x)).y");
+        }
+
+        [Fact]
+        public void TestArrayCreationExpressions()
+        {
+            VerifySyntax<ArrayCreationExpressionSyntax>(
+                _g.ArrayCreationExpression(_g.IdentifierName("x"), _g.LiteralExpression(10)),
+                "new x[10]");
+
+            VerifySyntax<ArrayCreationExpressionSyntax>(
+                _g.ArrayCreationExpression(_g.IdentifierName("x"), new SyntaxNode[] { _g.IdentifierName("y"), _g.IdentifierName("z") }),
+                "new x[]{y, z}");
         }
 
         [Fact]
@@ -926,6 +946,27 @@ public class MyAttribute : Attribute { public int Value {get; set;} }",
                 "t i2.m2()\r\n{\r\n}");
         }
 
+        [WorkItem(3928, "https://github.com/dotnet/roslyn/issues/3928")]
+        [Fact]
+        public void TestAsPrivateInterfaceImplementationRemovesConstraints()
+        {
+            var code = @"
+public interface IFace
+{
+    void Method<T>() where T : class;
+}";
+
+            var cu = SyntaxFactory.ParseCompilationUnit(code);
+            var iface = cu.Members[0];
+            var method = _g.GetMembers(iface)[0];
+
+            var privateMethod = _g.AsPrivateInterfaceImplementation(method, _g.IdentifierName("IFace"));
+
+            VerifySyntax<MethodDeclarationSyntax>(
+                privateMethod,
+                "void IFace.Method<T>()\r\n{\r\n}");
+        }
+
         [Fact]
         public void TestClassDeclarations()
         {
@@ -1308,6 +1349,32 @@ public class MyAttribute : Attribute { public int Value {get; set;} }",
         }
 
         [Fact]
+        [WorkItem(5066, "https://github.com/dotnet/roslyn/issues/5066")]
+        public void TestAddAttributesToAccessors()
+        {
+            var prop = _g.PropertyDeclaration("P", _g.IdentifierName("T"));
+            var evnt = _g.CustomEventDeclaration("E", _g.IdentifierName("T"));
+            CheckAddRemoveAttribute(_g.GetAccessor(prop, DeclarationKind.GetAccessor));
+            CheckAddRemoveAttribute(_g.GetAccessor(prop, DeclarationKind.SetAccessor));
+            CheckAddRemoveAttribute(_g.GetAccessor(evnt, DeclarationKind.AddAccessor));
+            CheckAddRemoveAttribute(_g.GetAccessor(evnt, DeclarationKind.RemoveAccessor));
+        }
+
+        private void CheckAddRemoveAttribute(SyntaxNode declaration)
+        {
+            var initialAttributes = _g.GetAttributes(declaration);
+            Assert.Equal(0, initialAttributes.Count);
+
+            var withAttribute = _g.AddAttributes(declaration, _g.Attribute("a"));
+            var attrsAdded = _g.GetAttributes(withAttribute);
+            Assert.Equal(1, attrsAdded.Count);
+
+            var withoutAttribute = _g.RemoveNode(withAttribute, attrsAdded[0]);
+            var attrsRemoved = _g.GetAttributes(withoutAttribute);
+            Assert.Equal(0, attrsRemoved.Count);
+        }
+
+        [Fact]
         public void TestAddRemoveAttributesPerservesTrivia()
         {
             var cls = SyntaxFactory.ParseCompilationUnit(@"// comment
@@ -1552,6 +1619,101 @@ public class C { } // end").Members[0];
         }
 
         [Fact]
+        public void TestRemoveNodeInTrivia()
+        {
+            var code = @"
+///<summary> ... </summary>
+public class C
+{
+}";
+
+            var cu = SyntaxFactory.ParseCompilationUnit(code);
+            var cls = cu.Members[0];
+            var summary = cls.DescendantNodes(descendIntoTrivia: true).OfType<XmlElementSyntax>().First();
+
+            var newCu = _g.RemoveNode(cu, summary);
+
+            VerifySyntaxRaw<CompilationUnitSyntax>(
+                newCu,
+                @"
+
+public class C
+{
+}");
+        }
+
+        [Fact]
+        public void TestReplaceNodeInTrivia()
+        {
+            var code = @"
+///<summary> ... </summary>
+public class C
+{
+}";
+
+            var cu = SyntaxFactory.ParseCompilationUnit(code);
+            var cls = cu.Members[0];
+            var summary = cls.DescendantNodes(descendIntoTrivia: true).OfType<XmlElementSyntax>().First();
+
+            var summary2 = summary.WithContent(default(SyntaxList<XmlNodeSyntax>));
+
+            var newCu = _g.ReplaceNode(cu, summary, summary2);
+
+            VerifySyntaxRaw<CompilationUnitSyntax>(
+                newCu, @"
+///<summary></summary>
+public class C
+{
+}");
+        }
+
+        [Fact]
+        public void TestInsertAfterNodeInTrivia()
+        {
+            var code = @"
+///<summary> ... </summary>
+public class C
+{
+}";
+
+            var cu = SyntaxFactory.ParseCompilationUnit(code);
+            var cls = cu.Members[0];
+            var text = cls.DescendantNodes(descendIntoTrivia: true).OfType<XmlTextSyntax>().First();
+
+            var newCu = _g.InsertNodesAfter(cu, text, new SyntaxNode[] { text });
+
+            VerifySyntaxRaw<CompilationUnitSyntax>(
+                newCu, @"
+///<summary> ...  ... </summary>
+public class C
+{
+}");
+        }
+
+        [Fact]
+        public void TestInsertBeforeNodeInTrivia()
+        {
+            var code = @"
+///<summary> ... </summary>
+public class C
+{
+}";
+
+            var cu = SyntaxFactory.ParseCompilationUnit(code);
+            var cls = cu.Members[0];
+            var text = cls.DescendantNodes(descendIntoTrivia: true).OfType<XmlTextSyntax>().First();
+
+            var newCu = _g.InsertNodesBefore(cu, text, new SyntaxNode[] { text });
+
+            VerifySyntaxRaw<CompilationUnitSyntax>(
+                newCu, @"
+///<summary> ...  ... </summary>
+public class C
+{
+}");
+        }
+
+        [Fact]
         public void TestAddMembers()
         {
             AssertMemberNamesEqual("m", _g.AddMembers(_g.ClassDeclaration("d"), new[] { _g.MethodDeclaration("m") }));
@@ -1654,7 +1816,7 @@ public class C { } // end").Members[0];
         }
 
         [Fact]
-        public void TestWithtName()
+        public void TestWithName()
         {
             Assert.Equal("c", _g.GetName(_g.WithName(_g.ClassDeclaration("x"), "c")));
             Assert.Equal("s", _g.GetName(_g.WithName(_g.StructDeclaration("x"), "s")));
@@ -2874,7 +3036,7 @@ public void M()
         [WorkItem(293, "https://github.com/dotnet/roslyn/issues/293")]
         [Fact]
         [Trait(Traits.Feature, Traits.Features.Formatting)]
-        public void IntroduceBaseList()
+        public async Task IntroduceBaseList()
         {
             var text = @"
 public class C
@@ -2892,7 +3054,7 @@ public class C : IDisposable
             var newDecl = _g.AddInterfaceType(decl, _g.IdentifierName("IDisposable"));
             var newRoot = root.ReplaceNode(decl, newDecl);
 
-            var elasticOnlyFormatted = Formatter.Format(newRoot, SyntaxAnnotation.ElasticAnnotation, _ws).ToFullString();
+            var elasticOnlyFormatted = (await Formatter.FormatAsync(newRoot, SyntaxAnnotation.ElasticAnnotation, _ws)).ToFullString();
             Assert.Equal(expected, elasticOnlyFormatted);
         }
 
