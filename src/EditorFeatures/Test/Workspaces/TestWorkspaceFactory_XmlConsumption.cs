@@ -72,7 +72,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
             ExportProvider exportProvider = null,
             string workspaceKind = null)
         {
-            return CreateWorkspaceAsync(workspaceElement, completed, openDocuments, exportProvider, workspaceKind).WaitAndGetResult(CancellationToken.None);
+            return CreateWorkspaceAsync(workspaceElement, completed, openDocuments, exportProvider, workspaceKind).WaitAndGetResult_CanCallOnBackground(CancellationToken.None);
         }
 
         public static async Task<TestWorkspace> CreateWorkspaceAsync(
@@ -219,12 +219,12 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                 {
                     submissions.Add(
                         new TestHostProject(
-                            languageServices, 
-                            compilationOptions: null, 
-                            parseOptions: null, 
-                            assemblyName: submissionName, 
-                            references: null, 
-                            documents: documents, 
+                            languageServices,
+                            compilationOptions: null,
+                            parseOptions: null,
+                            assemblyName: submissionName,
+                            references: null,
+                            documents: documents,
                             isSubmission: true));
                     continue;
                 }
@@ -243,7 +243,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
                     parseOptions,
                     submissionName,
                     references,
-                    documents, 
+                    documents,
                     isSubmission: true);
 
                 submissions.Add(project);

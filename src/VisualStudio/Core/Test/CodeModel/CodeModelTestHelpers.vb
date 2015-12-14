@@ -8,6 +8,7 @@ Imports Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
 Imports Microsoft.CodeAnalysis.Test.Utilities
 Imports Microsoft.VisualStudio.ComponentModelHost
 Imports Microsoft.VisualStudio.LanguageServices.Implementation.CodeModel
+Imports Microsoft.VisualStudio.LanguageServices.Implementation.CodeModel.ExternalElements
 Imports Microsoft.VisualStudio.LanguageServices.Implementation.CodeModel.InternalElements
 Imports Microsoft.VisualStudio.LanguageServices.Implementation.CodeModel.Interop
 Imports Microsoft.VisualStudio.LanguageServices.Implementation.Interop
@@ -144,9 +145,11 @@ Namespace Microsoft.VisualStudio.LanguageServices.UnitTests.CodeModel
             Dim result As EnvDTE.CodeElement = Nothing
 
             For Each candidateScope In candidateScopes
+                Roslyn.Test.Utilities.WpfTestCase.RequireWpfFact($"{NameOf(GetCodeElementAtCursor)} creates CodeElements and thus uses the affinited CleanableWeakComHandleTable")
+
                 Try
                     result = state.FileCodeModelObject.CodeElementFromPosition(cursorPosition, candidateScope)
-                Catch
+                Catch ex As COMException
                     ' Loop around and try the next candidate scope
                     result = Nothing
                 End Try
@@ -172,6 +175,14 @@ Namespace Microsoft.VisualStudio.LanguageServices.UnitTests.CodeModel
 
             Assert.True(codeElement IsNot Nothing, "Expected code element")
             Assert.True(codeElement.InfoLocation = EnvDTE.vsCMInfoLocation.vsCMInfoLocationProject, "Expected internal code element")
+
+            If TypeOf codeElement Is EnvDTE.CodeParameter Then
+                Dim codeParameter = DirectCast(codeElement, EnvDTE.CodeParameter)
+                Dim externalParentCodeElement = codeParameter.Parent.AsExternal()
+                Dim externalParentCodeElementImpl = ComAggregate.GetManagedObject(Of AbstractExternalCodeMember)(externalParentCodeElement)
+
+                Return DirectCast(externalParentCodeElementImpl.Parameters.Item(codeParameter.Name), T)
+            End If
 
             Dim codeElementImpl = ComAggregate.GetManagedObject(Of AbstractCodeElement)(codeElement)
             Dim state = codeElementImpl.State

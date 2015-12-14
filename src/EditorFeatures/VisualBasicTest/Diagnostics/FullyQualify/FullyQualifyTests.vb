@@ -1,5 +1,6 @@
-Option Strict Off
 ' Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+Option Strict Off
 
 Imports System.Threading.Tasks
 Imports Microsoft.CodeAnalysis.CodeFixes
@@ -270,7 +271,7 @@ NewLines("Module Program \n Sub Main(args As String()) \n Dim x As OUTER.INNER.F
         End Function
 
         <WorkItem(821292)>
-        <WpfFact, Trait(Traits.Feature, Traits.Features.CodeActionsFullyQualify)>
+        <WpfFact(Skip:="https://github.com/dotnet/roslyn/issues/7369"), Trait(Traits.Feature, Traits.Features.CodeActionsFullyQualify)>
         Public Async Function TestCaseSensitivity3() As Task
             Await TestAsync(
 NewLines("Imports System \n Module Program \n Sub Main(args As String()) \n Dim x As [|stream|] \n End Sub \n End Module"),
