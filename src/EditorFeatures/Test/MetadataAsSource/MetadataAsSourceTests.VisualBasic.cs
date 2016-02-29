@@ -11,7 +11,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.MetadataAsSource
     {
         public class VisualBasic
         {
-            [Fact, WorkItem(530123), Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
+            [Fact, WorkItem(530123, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530123"), Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
             public async Task TestGenerateTypeInModule()
             {
                 var metadataSource = @"
@@ -31,7 +31,7 @@ Friend Module M
 End Module");
             }
 
-            [WorkItem(530526)]
+            [WorkItem(530526, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530526")]
             [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
             public async Task BracketedIdentifierSimplificationTest()
             {
@@ -61,7 +61,7 @@ End Namespace";
 
                 using (var context = await TestContext.CreateAsync(LanguageNames.VisualBasic))
                 {
-                    context.GenerateAndVerifySource("System.ObsoleteAttribute", expected);
+                    await context.GenerateAndVerifySourceAsync("System.ObsoleteAttribute", expected);
                 }
             }
 

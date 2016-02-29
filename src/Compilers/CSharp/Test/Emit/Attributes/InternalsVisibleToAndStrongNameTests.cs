@@ -41,7 +41,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
 
         #region Naming Tests
 
-        [Fact, WorkItem(529419, "DevDiv")]
+        [Fact, WorkItem(529419, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/529419")]
         public void AssemblyKeyFileAttributeNotExistFile()
         {
             string source = @"
@@ -420,6 +420,24 @@ public class C {}
             Assert.Equal(CorFlags.ILOnly | CorFlags.StrongNameSigned, metadata.Module.PEReaderOpt.PEHeaders.CorHeader.Flags);
         }
 
+        private void VerifySignedBitSetAfterEmit(Compilation comp)
+        {
+            var outStrm = new MemoryStream();
+            var emitResult = comp.Emit(outStrm);
+            Assert.True(emitResult.Success);
+
+            outStrm.Position = 0;
+
+            // Verify that the sign bit is set
+            using (var reader = new PEReader(outStrm))
+            {
+                Assert.True(reader.HasMetadata);
+
+                var flags = reader.PEHeaders.CorHeader.Flags;
+                Assert.True(flags.HasFlag(CorFlags.StrongNameSigned));
+            }
+        }
+
         [Fact]
         public void SnkFile_PublicSign()
         {
@@ -437,20 +455,7 @@ public class C {}
             Assert.False(comp.IsRealSigned);
             Assert.NotNull(comp.Options.CryptoKeyFile);
 
-            var outStrm = new MemoryStream();
-            var emitResult = comp.Emit(outStrm);
-            Assert.True(emitResult.Success);
-
-            outStrm.Position = 0;
-
-            // Verify that the sign bit is set
-            using (var reader = new PEReader(outStrm))
-            {
-                Assert.True(reader.HasMetadata);
-
-                var flags = reader.PEHeaders.CorHeader.Flags;
-                Assert.True(flags.HasFlag(CorFlags.StrongNameSigned));
-            }
+            VerifySignedBitSetAfterEmit(comp);
         }
 
         [Fact]
@@ -470,20 +475,31 @@ public class C {}
             Assert.False(comp.IsRealSigned);
             Assert.NotNull(comp.Options.CryptoKeyFile);
 
-            var outStrm = new MemoryStream();
-            var emitResult = comp.Emit(outStrm);
-            Assert.True(emitResult.Success);
+            VerifySignedBitSetAfterEmit(comp);
+        }
 
-            outStrm.Position = 0;
+        [Fact]
+        public void PublicSign_DelaySignAttribute()
+        {
+            var pubKeyFile = Temp.CreateFile().WriteAllBytes(TestResources.General.snPublicKey);
 
-            // Verify that the sign bit is set
-            using (var reader = new PEReader(outStrm))
-            {
-                Assert.True(reader.HasMetadata);
+            var comp = CreateCompilationWithMscorlib(@"
+[assembly: System.Reflection.AssemblyDelaySign(true)]
+public class C {}",
+                options: TestOptions.ReleaseDll
+                    .WithCryptoKeyFile(pubKeyFile.Path)
+                    .WithPublicSign(true));
 
-                var flags = reader.PEHeaders.CorHeader.Flags;
-                Assert.True(flags.HasFlag(CorFlags.StrongNameSigned));
-            }
+            comp.VerifyDiagnostics(
+    // warning CS1616: Option 'PublicSign' overrides attribute 'System.Reflection.AssemblyDelaySignAttribute' given in a source file or added module
+    Diagnostic(ErrorCode.WRN_CmdOptionConflictsSource).WithArguments("PublicSign", "System.Reflection.AssemblyDelaySignAttribute").WithLocation(1, 1));
+
+            Assert.True(comp.Options.PublicSign);
+            Assert.Null(comp.Options.DelaySign);
+            Assert.False(comp.IsRealSigned);
+            Assert.NotNull(comp.Options.CryptoKeyFile);
+
+            VerifySignedBitSetAfterEmit(comp);
         }
 
         [Fact]
@@ -517,20 +533,57 @@ public class C {}
             Assert.False(comp.IsRealSigned);
             Assert.NotNull(comp.Options.CryptoKeyContainer);
 
-            var outStrm = new MemoryStream();
-            var emitResult = comp.Emit(outStrm);
-            Assert.True(emitResult.Success);
+            VerifySignedBitSetAfterEmit(comp);
+        }
 
-            outStrm.Position = 0;
+        [Fact]
+        public void PublicSignAndDelaySign()
+        {
+            var snk = Temp.CreateFile().WriteAllBytes(TestResources.General.snKey);
 
-            // Verify that the sign bit is set
-            using (var reader = new PEReader(outStrm))
-            {
-                Assert.True(reader.HasMetadata);
+            var comp = CreateCompilationWithMscorlib("public class C {}",
+                options: TestOptions.ReleaseDll
+                    .WithPublicSign(true)
+                    .WithDelaySign(true)
+                    .WithCryptoKeyFile(snk.Path));
 
-                var flags = reader.PEHeaders.CorHeader.Flags;
-                Assert.True(flags.HasFlag(CorFlags.StrongNameSigned));
-            }
+            comp.VerifyDiagnostics(
+    // error CS7102: Compilation options 'PublicSign' and 'DelaySign' can't both be specified at the same time.
+    Diagnostic(ErrorCode.ERR_MutuallyExclusiveOptions).WithArguments("PublicSign", "DelaySign").WithLocation(1, 1));
+
+            Assert.True(comp.Options.PublicSign);
+            Assert.True(comp.Options.DelaySign);
+        }
+
+        [Fact]
+        public void PublicSignAndDelaySignFalse()
+        {
+            var snk = Temp.CreateFile().WriteAllBytes(TestResources.General.snKey);
+
+            var comp = CreateCompilationWithMscorlib("public class C {}",
+                options: TestOptions.ReleaseDll
+                    .WithPublicSign(true)
+                    .WithDelaySign(false)
+                    .WithCryptoKeyFile(snk.Path));
+
+            comp.VerifyDiagnostics();
+
+            Assert.True(comp.Options.PublicSign);
+            Assert.False(comp.Options.DelaySign);
+        }
+
+        [Fact]
+        public void PublicSignNoKey()
+        {
+            var comp = CreateCompilationWithMscorlib("public class C {}",
+                options: TestOptions.ReleaseDll
+                    .WithPublicSign(true));
+
+            comp.VerifyDiagnostics(
+    // error CS8102: Public signing was specified and requires a public key, but no public key was specified.
+    Diagnostic(ErrorCode.ERR_PublicSignButNoKey).WithLocation(1, 1));
+            Assert.True(comp.Options.PublicSign);
+            Assert.True(comp.Assembly.PublicKey.IsDefaultOrEmpty);
         }
 
         [Fact]
@@ -848,7 +901,7 @@ public class A
             requestor.VerifyDiagnostics(Diagnostic(ErrorCode.ERR_FriendRefNotEqualToThis, arguments: new object[] { "Paul, Version=0.0.0.0, Culture=neutral, PublicKeyToken=ce65828c82a341f2" }));
         }
 
-        [WorkItem(820450, "DevDiv")]
+        [WorkItem(820450, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/820450")]
         [Fact]
         public void IVTGivesAccessToUsingDifferentKeys()
         {
@@ -1062,7 +1115,7 @@ public class Z
             other.VerifyDiagnostics(Diagnostic(ErrorCode.ERR_PublicKeyFileFailure).WithArguments("bogus", CodeAnalysisResources.FileNotFound));
         }
 
-        [WorkItem(531195, "DevDiv")]
+        [WorkItem(531195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531195")]
         [Fact()]
         public void SignModuleKeyContainerCmdLine()
         {
@@ -1077,7 +1130,7 @@ public class Z
             ConfirmModuleAttributePresentAndAddingToAssemblyResultsInSignedOutput(outStrm, AttributeDescription.AssemblyKeyNameAttribute);
         }
 
-        [WorkItem(531195, "DevDiv")]
+        [WorkItem(531195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531195")]
         [Fact()]
         public void SignModuleKeyContainerCmdLine_1()
         {
@@ -1095,7 +1148,7 @@ public class C {}";
             ConfirmModuleAttributePresentAndAddingToAssemblyResultsInSignedOutput(outStrm, AttributeDescription.AssemblyKeyNameAttribute);
         }
 
-        [WorkItem(531195, "DevDiv")]
+        [WorkItem(531195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531195")]
         [Fact()]
         public void SignModuleKeyContainerCmdLine_2()
         {
@@ -1114,7 +1167,7 @@ public class C {}";
                 );
         }
 
-        [WorkItem(531195, "DevDiv")]
+        [WorkItem(531195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531195")]
         [Fact()]
         public void SignModuleKeyFileCmdLine()
         {
@@ -1129,7 +1182,7 @@ public class C {}";
             ConfirmModuleAttributePresentAndAddingToAssemblyResultsInSignedOutput(outStrm, AttributeDescription.AssemblyKeyFileAttribute);
         }
 
-        [WorkItem(531195, "DevDiv")]
+        [WorkItem(531195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531195")]
         [Fact()]
         public void SignModuleKeyFileCmdLine_1()
         {
@@ -1145,7 +1198,7 @@ public class C {}";
             ConfirmModuleAttributePresentAndAddingToAssemblyResultsInSignedOutput(outStrm, AttributeDescription.AssemblyKeyFileAttribute);
         }
 
-        [WorkItem(531195, "DevDiv")]
+        [WorkItem(531195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531195")]
         [Fact()]
         public void SignModuleKeyFileCmdLine_2()
         {
@@ -1306,8 +1359,8 @@ public class C
             }
         }
 
-        [WorkItem(545720, "DevDiv")]
-        [WorkItem(530050, "DevDiv")]
+        [WorkItem(545720, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545720")]
+        [WorkItem(530050, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530050")]
         [Fact]
         public void InvalidAssemblyName()
         {
@@ -1348,7 +1401,7 @@ class Derived : Base
                 Diagnostic(ErrorCode.ERR_BadAccess, "Base").WithArguments("Base"));
         }
 
-        [WorkItem(546331, "DevDiv")]
+        [WorkItem(546331, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546331")]
         [Fact]
         public void IvtVirtualCall1()
         {
@@ -1454,7 +1507,7 @@ public class C : B
 ");
         }
 
-        [WorkItem(546331, "DevDiv")]
+        [WorkItem(546331, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546331")]
         [Fact]
         public void IvtVirtualCall2()
         {
@@ -1699,7 +1752,7 @@ public class C : B
         }
 
         [Fact]
-        [WorkItem(529779, "DevDiv")]
+        [WorkItem(529779, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/529779")]
         public void Bug529779_1()
         {
             CSharpCompilation unsigned = CreateCompilationWithMscorlib(
@@ -1726,7 +1779,7 @@ public class C
         }
 
         [Fact]
-        [WorkItem(529779, "DevDiv")]
+        [WorkItem(529779, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/529779")]
         public void Bug529779_2()
         {
             CSharpCompilation unsigned = CreateCompilationWithMscorlib(
@@ -1987,7 +2040,7 @@ public class C
             }
         }
 
-        [Fact, WorkItem(769840, "DevDiv")]
+        [Fact, WorkItem(769840, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/769840")]
         public void Bug769840()
         {
             var ca = CreateCompilationWithMscorlib(
@@ -2018,7 +2071,7 @@ internal class B
             CompileAndVerify(cb, verify: false).Diagnostics.Verify();
         }
 
-        [Fact, WorkItem(1072350, "DevDiv")]
+        [Fact, WorkItem(1072350, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1072350")]
         public void Bug1072350()
         {
             const string sourceA = @"
@@ -2044,7 +2097,7 @@ class B
             CompileAndVerify(cb, expectedOutput: "42").Diagnostics.Verify();
         }
 
-        [Fact, WorkItem(1072339, "DevDiv")]
+        [Fact, WorkItem(1072339, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1072339")]
         public void Bug1072339()
         {
             const string sourceA = @"
@@ -2070,7 +2123,7 @@ class B
             CompileAndVerify(cb, expectedOutput: "42").Diagnostics.Verify();
         }
 
-        [Fact, WorkItem(1095618, "DevDiv")]
+        [Fact, WorkItem(1095618, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1095618")]
         public void Bug1095618()
         {
             const string source = @"[assembly: System.Runtime.CompilerServices.InternalsVisibleTo(""System.Runtime.Serialization, PublicKey = 10000000000000000400000000000000"")]";

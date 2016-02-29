@@ -182,7 +182,8 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             var builder = ImmutableArray.CreateBuilder<CompilationEvent>();
             foreach (var symbol in declaredSymbols)
-            {   
+            {
+                Debug.Assert(symbol.ContainingAssembly == compilation.Assembly);
                 builder.Add(new SymbolDeclaredCompilationEvent(compilation, symbol));
             }
 
@@ -233,6 +234,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             AddToEventsMap_NoLock(compilationEvents, filterTreeOpt);
 
             // Mark the events for analysis for each analyzer.
+            ArrayBuilder<ISymbol> newPartialSymbols = null;
             Debug.Assert(_pooledEventsWithAnyActionsSet.Count == 0);
             foreach (var kvp in _analyzerStateMap)
             {
@@ -247,11 +249,18 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                         _pooledEventsWithAnyActionsSet.Add(compilationEvent);
 
                         var symbolDeclaredEvent = compilationEvent as SymbolDeclaredCompilationEvent;
-                        if (symbolDeclaredEvent?.DeclaringSyntaxReferences.Length > 1 &&
-                            !_partialSymbolsWithGeneratedSourceEvents.Add(symbolDeclaredEvent.Symbol))
+                        if (symbolDeclaredEvent?.DeclaringSyntaxReferences.Length > 1)
                         {
-                            // already processed.
-                            continue;
+                            if (_partialSymbolsWithGeneratedSourceEvents.Contains(symbolDeclaredEvent.Symbol))
+                            {
+                                // already processed.
+                                continue;
+                            }
+                            else
+                            {
+                                newPartialSymbols = newPartialSymbols ?? ArrayBuilder<ISymbol>.GetInstance();
+                                newPartialSymbols.Add(symbolDeclaredEvent.Symbol);
+                            }
                         }
 
                         analyzerState.OnCompilationEventGenerated(compilationEvent, actionCounts);
@@ -266,6 +275,12 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                     // Event has no relevant actions to execute, so mark it as complete.  
                     UpdateEventsMap_NoLock(compilationEvent, add: false);
                 }
+            }
+
+            if (newPartialSymbols != null)
+            {
+                _partialSymbolsWithGeneratedSourceEvents.AddAll(newPartialSymbols);
+                newPartialSymbols.Free();
             }
         }
 
@@ -477,10 +492,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
             foreach (var analyzer in analyzers)
             {
                 var analyzerState = GetAnalyzerState(analyzer);
-                foreach (var pendingEvent in analyzerState.PendingEvents_NoLock)
-                {
-                    uniqueEvents.Add(pendingEvent);
-                }
+                analyzerState.AddPendingEvents(uniqueEvents);
             }
 
             return uniqueEvents;

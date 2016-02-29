@@ -16,16 +16,16 @@ using Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE;
 using Microsoft.CodeAnalysis.CSharp.UnitTests;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Microsoft.CodeAnalysis.Text;
-using Roslyn.Test.MetadataUtilities;
 using Roslyn.Utilities;
 using Xunit;
 using Roslyn.Test.Utilities;
+using Roslyn.Test.MetadataUtilities;
 
 namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
 {
     public abstract class CSharpTestBase : CSharpTestBaseBase
     {
-        protected new CSharpCompilation GetCompilationForEmit(
+        protected CSharpCompilation GetCSharpCompilationForEmit(
             IEnumerable<string> source,
             IEnumerable<MetadataReference> additionalRefs,
             CompilationOptions options,
@@ -63,7 +63,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
             }
         }
 
-        internal CompilationVerifier CompileAndVerify(
+        internal ICompilationVerifier CompileAndVerify(
             string source,
             IEnumerable<MetadataReference> additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
@@ -90,68 +90,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
                 verify: verify);
         }
 
-        internal CompilationVerifier CompileAndVerifyExperimental(
-            string source,
-            string expectedOutput = null,
-            MetadataReference[] additionalRefs = null,
-            IEnumerable<ModuleData> dependencies = null,
-            Action<ModuleSymbol> sourceSymbolValidator = null,
-            Action<PEAssembly> assemblyValidator = null,
-            Action<ModuleSymbol> symbolValidator = null,
-            SignatureDescription[] expectedSignatures = null,
-            bool verify = true)
-        {
-            var options = (expectedOutput != null) ? TestOptions.ReleaseExe : TestOptions.ReleaseDll;
-
-            var compilation = CreateExperimentalCompilationWithMscorlib45(source, additionalRefs, options);
-
-            return CompileAndVerify(
-                compilation: compilation,
-                dependencies: dependencies,
-                sourceSymbolValidator: Translate2(sourceSymbolValidator),
-                assemblyValidator: assemblyValidator,
-                symbolValidator: Translate2(symbolValidator),
-                expectedSignatures: expectedSignatures,
-                expectedOutput: expectedOutput,
-                verify: verify);
-        }
-
-        internal CompilationVerifier CompileAndVerifyWinRt(
-            string source,
-            string expectedOutput = null,
-            MetadataReference[] additionalRefs = null,
-            CSharpCompilationOptions options = null,
-            bool verify = true)
-        {
-            if (options == null)
-            {
-                options = expectedOutput != null ? TestOptions.ReleaseExe : TestOptions.ReleaseDll;
-            }
-
-            var compilation = CreateCompilation(source,
-                                                WinRtRefs.Concat(additionalRefs ?? Enumerable.Empty<MetadataReference>()),
-                                                options);
-
-            return CompileAndVerify(
-                compilation: compilation,
-                expectedOutput: expectedOutput,
-                verify: verify);
-        }
-
-        internal CompilationVerifier CompileAndVerifyOnWin8Only(
-            string source,
-            MetadataReference[] additionalRefs = null,
-            string expectedOutput = null)
-        {
-            var isWin8 = OSVersion.IsWin8;
-            return CompileAndVerifyWinRt(
-                source,
-                additionalRefs: additionalRefs,
-                expectedOutput: isWin8 ? expectedOutput : null,
-                verify: isWin8);
-        }
-
-        internal CompilationVerifier CompileAndVerify(
+        internal ICompilationVerifier CompileAndVerify(
             string[] sources,
             MetadataReference[] additionalRefs = null,
             IEnumerable<ModuleData> dependencies = null,
@@ -178,7 +117,55 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
                 verify);
         }
 
-        internal CompilationVerifier CompileAndVerify(
+        internal ICompilationVerifier CompileAndVerifyExperimental(
+            string source,
+            string expectedOutput = null,
+            MetadataReference[] additionalRefs = null,
+            IEnumerable<ModuleData> dependencies = null,
+            Action<ModuleSymbol> sourceSymbolValidator = null,
+            Action<PEAssembly> assemblyValidator = null,
+            Action<ModuleSymbol> symbolValidator = null,
+            SignatureDescription[] expectedSignatures = null,
+            bool verify = true)
+        {
+            var options = (expectedOutput != null) ? TestOptions.ReleaseExe : TestOptions.ReleaseDll;
+
+            var compilation = CreateExperimentalCompilationWithMscorlib45(source, additionalRefs, options);
+
+            return CompileAndVerify(
+                compilation: compilation,
+                dependencies: dependencies,
+                sourceSymbolValidator: Translate2(sourceSymbolValidator),
+                assemblyValidator: assemblyValidator,
+                symbolValidator: Translate2(symbolValidator),
+                expectedSignatures: expectedSignatures,
+                expectedOutput: expectedOutput,
+                verify: verify);
+        }
+
+        internal ICompilationVerifier CompileAndVerifyWinRt(
+            string source,
+            string expectedOutput = null,
+            MetadataReference[] additionalRefs = null,
+            CSharpCompilationOptions options = null,
+            bool verify = true)
+        {
+            if (options == null)
+            {
+                options = expectedOutput != null ? TestOptions.ReleaseExe : TestOptions.ReleaseDll;
+            }
+
+            var compilation = CreateCompilation(source,
+                                                WinRtRefs.Concat(additionalRefs ?? Enumerable.Empty<MetadataReference>()),
+                                                options);
+
+            return CompileAndVerify(
+                compilation: compilation,
+                expectedOutput: expectedOutput,
+                verify: verify);
+        }
+
+        internal ICompilationVerifier CompileAndVerify(
             Compilation compilation,
             IEnumerable<ResourceDescription> manifestResources = null,
             IEnumerable<ModuleData> dependencies = null,
@@ -311,6 +298,36 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
             return CreateCompilation(source, refs, options, assemblyName);
         }
 
+        public static CSharpCompilation CreateCompilationWithMscorlib46(
+            IEnumerable<SyntaxTree> source,
+            IEnumerable<MetadataReference> references = null,
+            CSharpCompilationOptions options = null,
+            string assemblyName = "")
+        {
+            var refs = new List<MetadataReference>();
+            if (references != null)
+            {
+                refs.AddRange(references);
+            }
+            refs.Add(MscorlibRef_v46);
+            return CreateCompilation(source, refs, options, assemblyName);
+        }
+
+        public static CSharpCompilation CreateCompilationWithMscorlib46(
+            string[] sources,
+            IEnumerable<MetadataReference> references = null,
+            CSharpCompilationOptions options = null,
+            CSharpParseOptions parseOptions = null,
+            string sourceFileName = "",
+            string assemblyName = "")
+        {
+            return CreateCompilationWithMscorlib46(
+                sources.Select((source) => Parse(source, sourceFileName, parseOptions)).ToArray(),
+                references,
+                options,
+                assemblyName);
+        }
+
         public static CSharpCompilation CreateCompilationWithMscorlib45(
             string source,
             IEnumerable<MetadataReference> references = null,
@@ -321,6 +338,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
         {
             return CreateCompilationWithMscorlib45(
                 new SyntaxTree[] { Parse(source, sourceFileName, parseOptions) },
+                references,
+                options,
+                assemblyName);
+        }
+
+        public static CSharpCompilation CreateCompilationWithMscorlib45(
+            string[] sources,
+            IEnumerable<MetadataReference> references = null,
+            CSharpCompilationOptions options = null,
+            CSharpParseOptions parseOptions = null,
+            string sourceFileName = "",
+            string assemblyName = "")
+        {
+            return CreateCompilationWithMscorlib45(
+                sources.Select((source) => Parse(source, sourceFileName, parseOptions)).ToArray(),
                 references,
                 options,
                 assemblyName);
@@ -366,7 +398,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
 
             return CreateCompilation(new[] { Parse(text, options: parseOptions) }, refs, options);
         }
-
 
         public static CSharpCompilation CreateCompilationWithMscorlib(
             IEnumerable<string> sources,
@@ -531,33 +562,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
                 globalsType: hostObjectType);
         }
 
-        public CompilationVerifier CompileWithCustomILSource(string cSharpSource, string ilSource, Action<CSharpCompilation> compilationVerifier = null, bool importInternals = true, string expectedOutput = null)
-        {
-            var compilationOptions = (expectedOutput != null) ? TestOptions.ReleaseExe : TestOptions.ReleaseDll;
-
-            if (importInternals)
-            {
-                compilationOptions = compilationOptions.WithMetadataImportOptions(MetadataImportOptions.Internal);
-            }
-
-            if (ilSource == null)
-            {
-                var c = CreateCompilationWithMscorlib(cSharpSource, options: compilationOptions);
-                return CompileAndVerify(c, expectedOutput: expectedOutput);
-            }
-
-            MetadataReference reference = null;
-            using (var tempAssembly = IlasmUtilities.CreateTempAssembly(ilSource))
-            {
-                reference = MetadataReference.CreateFromImage(ReadFromFile(tempAssembly.Path));
-            }
-
-            var compilation = CreateCompilationWithMscorlib(cSharpSource, new[] { reference }, compilationOptions);
-            compilationVerifier?.Invoke(compilation);
-
-            return CompileAndVerify(compilation, expectedOutput: expectedOutput);
-        }
-
         protected override Compilation GetCompilationForEmit(
             IEnumerable<string> source,
             IEnumerable<MetadataReference> additionalRefs,
@@ -578,20 +582,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
         /// <typeparam name="T">Expected type of the exception.</typeparam>
         /// <param name="source">Program to compile and execute.</param>
         /// <param name="expectedMessage">Ignored if null.</param>
-        internal CompilationVerifier CompileAndVerifyException<T>(string source, string expectedMessage = null, bool allowUnsafe = false) where T : Exception
+        internal ICompilationVerifier CompileAndVerifyException<T>(string source, string expectedMessage = null, bool allowUnsafe = false) where T : Exception
         {
             var comp = CreateCompilationWithMscorlib(source, options: TestOptions.ReleaseExe.WithAllowUnsafe(allowUnsafe));
             return CompileAndVerifyException<T>(comp, expectedMessage);
         }
 
-        internal CompilationVerifier CompileAndVerifyException<T>(CSharpCompilation comp, string expectedMessage = null) where T : Exception
+        internal ICompilationVerifier CompileAndVerifyException<T>(CSharpCompilation comp, string expectedMessage = null) where T : Exception
         {
             try
             {
                 CompileAndVerify(comp, expectedOutput: ""); //need expected output to force execution
                 Assert.False(true, string.Format("Expected exception {0}({1})", typeof(T).Name, expectedMessage));
             }
-            catch (ExecutionException x)
+            catch (Exception x)
             {
                 var e = x.InnerException;
                 Assert.IsType<T>(e);
@@ -764,33 +768,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
             using (MemoryStream stream = new MemoryStream())
             {
                 DiagnosticBag diagnostics = DiagnosticBag.GetInstance();
-                System.Globalization.CultureInfo saveUICulture = null;
 
-                if (ensureEnglishUICulture)
-                {
-                    var preferred = EnsureEnglishUICulture.PreferredOrNull;
-
-                    if (preferred == null)
-                    {
-                        ensureEnglishUICulture = false;
-                    }
-                    else
-                    {
-                        saveUICulture = Thread.CurrentThread.CurrentUICulture;
-                        Thread.CurrentThread.CurrentUICulture = preferred;
-                    }
-                }
-
-                try
+                var ensureObject = ensureEnglishUICulture ? new EnsureEnglishUICulture() : null;
+                using (ensureObject)
                 {
                     DocumentationCommentCompiler.WriteDocumentationCommentXml(compilation, outputName, stream, diagnostics, default(CancellationToken), filterTree, filterSpanWithinTree);
-                }
-                finally
-                {
-                    if (ensureEnglishUICulture)
-                    {
-                        Thread.CurrentThread.CurrentUICulture = saveUICulture;
-                    }
                 }
 
                 if (expectedDiagnostics != null)
@@ -799,7 +781,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Test.Utilities
                 }
                 diagnostics.Free();
 
-                string text = Encoding.UTF8.GetString(stream.GetBuffer());
+                byte[] buffer;
+                ArraySegment<byte> bufferSegment;
+                if (stream.TryGetBuffer(out bufferSegment) &&
+                    bufferSegment.Count == bufferSegment.Array.Length)
+                {
+                    buffer = bufferSegment.Array;
+                }
+                else
+                {
+                    buffer = stream.ToArray();
+                }
+
+                string text = Encoding.UTF8.GetString(buffer);
                 int length = text.IndexOf('\0');
                 if (length >= 0)
                 {

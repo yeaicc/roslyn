@@ -16,6 +16,8 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
 {
     internal partial class PreviewPane : UserControl, IDisposable
     {
+        private const double DefaultWidth = 400;
+
         private static readonly string s_dummyThreeLineTitle = "A" + Environment.NewLine + "A" + Environment.NewLine + "A";
         private static readonly Size s_infiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
 
@@ -26,8 +28,15 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
         private double _heightForThreeLineTitle;
         private IWpfDifferenceViewer _previewDiffViewer;
 
-        public PreviewPane(Image severityIcon, string id, string title, string description, Uri helpLink, string helpLinkToolTipText,
-            IList<object> previewContent, bool logIdVerbatimInTelemetry)
+        public PreviewPane(
+            Image severityIcon,
+            string id,
+            string title,
+            string description,
+            Uri helpLink,
+            string helpLinkToolTipText,
+            IReadOnlyList<object> previewContent,
+            bool logIdVerbatimInTelemetry)
         {
             InitializeComponent();
 
@@ -62,7 +71,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
             InitializePreviewElement(previewContent);
         }
 
-        private void InitializePreviewElement(IList<object> previewItems)
+        private void InitializePreviewElement(IReadOnlyList<object> previewItems)
         {
             var previewElement = CreatePreviewElement(previewItems);
 
@@ -84,7 +93,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
             AdjustWidthAndHeight(previewElement);
         }
 
-        private FrameworkElement CreatePreviewElement(IList<object> previewItems)
+        private FrameworkElement CreatePreviewElement(IReadOnlyList<object> previewItems)
         {
             if (previewItems == null || previewItems.Count == 0)
             {
@@ -112,7 +121,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
                 }
                 else if (previewItem is string)
                 {
-                    previewElement = GetPreviewForString((string)previewItem, createBorder: previewItems.Count == 0);
+                    previewElement = GetPreviewForString((string)previewItem);
                 }
                 else if (previewItem is FrameworkElement)
                 {
@@ -150,38 +159,15 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
             LearnMoreHyperlink.ToolTip = helpLinkToolTipText;
         }
 
-        public static FrameworkElement GetPreviewForString(string previewContent, bool useItalicFontStyle = false, bool centerAlignTextHorizontally = false, bool createBorder = false)
+        private static FrameworkElement GetPreviewForString(string previewContent)
         {
-            var textBlock = new TextBlock()
+            return new TextBlock()
             {
                 Margin = new Thickness(5),
                 VerticalAlignment = VerticalAlignment.Center,
                 Text = previewContent,
                 TextWrapping = TextWrapping.Wrap,
             };
-
-            if (useItalicFontStyle)
-            {
-                textBlock.FontStyle = FontStyles.Italic;
-            }
-
-            if (centerAlignTextHorizontally)
-            {
-                textBlock.TextAlignment = TextAlignment.Center;
-            }
-
-            FrameworkElement preview = textBlock;
-            if (createBorder)
-            {
-                preview = new Border()
-                {
-                    Width = 400,
-                    MinHeight = 75,
-                    Child = textBlock
-                };
-            }
-
-            return preview;
         }
 
         // This method adjusts the width of the header section to match that of the preview content
@@ -202,7 +188,9 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.PreviewPane
             }
             else
             {
-                PreviewDockPanel.Measure(availableSize: new Size(previewElement.Width, double.PositiveInfinity));
+                PreviewDockPanel.Measure(availableSize: new Size(
+                    double.IsNaN(previewElement.Width) ? DefaultWidth : previewElement.Width,
+                    double.PositiveInfinity));
                 headerStackPanelWidth = PreviewDockPanel.DesiredSize.Width;
                 if (IsNormal(headerStackPanelWidth))
                 {

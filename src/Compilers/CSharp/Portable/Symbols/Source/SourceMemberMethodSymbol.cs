@@ -392,7 +392,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 if (state.NotePartComplete(CompletionPart.StartAsyncMethodChecks))
                 {
-                    if (IsPartialDefinition) DeclaringCompilation.SymbolDeclaredEvent(this);
+                    if (IsPartialDefinition && (object)PartialImplementationPart == null)
+                    {
+                        DeclaringCompilation.SymbolDeclaredEvent(this);
+                    }
+
                     state.NotePartComplete(CompletionPart.FinishAsyncMethodChecks);
                 }
                 else
@@ -822,10 +826,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                 var location = identifier.GetLocation();
                 var name = identifier.ValueText;
 
-                if (name == this.Name)
-                {
-                    diagnostics.Add(ErrorCode.ERR_TypeVariableSameAsParent, location, name);
-                }
+                // Note: It is not an error to have a type parameter named the same as its enclosing method: void M<M>() {}
 
                 for (int i = 0; i < result.Count; i++)
                 {

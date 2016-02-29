@@ -104,7 +104,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// <param name="options">Options that are passed to analyzers.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to abort analysis.</param>
         public CompilationWithAnalyzers(Compilation compilation, ImmutableArray<DiagnosticAnalyzer> analyzers, AnalyzerOptions options, CancellationToken cancellationToken)
-            : this(compilation, analyzers, new CompilationWithAnalyzersOptions(options, onAnalyzerException: null, concurrentAnalysis: true, logAnalyzerExecutionTime: true), cancellationToken)
+            : this(compilation, analyzers, new CompilationWithAnalyzersOptions(options, onAnalyzerException: null, analyzerExceptionFilter: null, concurrentAnalysis: true, logAnalyzerExecutionTime: true), cancellationToken)
         {
         }
 
@@ -568,11 +568,11 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                                                 AsyncQueue<CompilationEvent> eventQueue = null;
                                                 try
                                                 {
-                                                // Get event queue with pending events to analyze.
-                                                eventQueue = getEventQueue();
+                                                    // Get event queue with pending events to analyze.
+                                                    eventQueue = getEventQueue();
 
-                                                // Execute analyzer driver on the given analysis scope with the given event queue.
-                                                await ComputeAnalyzerDiagnosticsCoreAsync(driver, eventQueue, analysisScope, cancellationToken: linkedCts.Token).ConfigureAwait(false);
+                                                    // Execute analyzer driver on the given analysis scope with the given event queue.
+                                                    await ComputeAnalyzerDiagnosticsCoreAsync(driver, eventQueue, analysisScope, cancellationToken: linkedCts.Token).ConfigureAwait(false);
                                                 }
                                                 finally
                                                 {
@@ -626,40 +626,28 @@ namespace Microsoft.CodeAnalysis.Diagnostics
 
         private async Task<AnalyzerDriver> GetAnalyzerDriverAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Get instance of analyzer driver from the driver pool.
+            AnalyzerDriver driver = _driverPool.Allocate();
+
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // Get instance of analyzer driver from the driver pool.
-                AnalyzerDriver driver = _driverPool.Allocate();
-
-                try
+                // Start the initialization task, if required.
+                if (driver.WhenInitializedTask == null)
                 {
-                    // Start the initialization task, if required.
-                    if (driver.WhenInitializedTask == null)
-                    {
-                        driver.Initialize(_compilation, _analysisOptions, _compilationData, categorizeDiagnostics: true, cancellationToken: cancellationToken);
-                    }
+                    driver.Initialize(_compilation, _analysisOptions, _compilationData, categorizeDiagnostics: true, cancellationToken: cancellationToken);
+                }
 
-                    // Wait for driver initialization to complete: this executes the Initialize and CompilationStartActions to compute all registered actions per-analyzer.
-                    await driver.WhenInitializedTask.ConfigureAwait(false);
-                }
-                finally
-                {
-                    if (driver.WhenInitializedTask.IsCanceled)
-                    {
-                        // If the initialization task was cancelled, we retry again with our own cancellation token.
-                        // This can happen if the task that started the initialization was cancelled by the callee, and the new request picked up this driver instance.
-                        _driverPool.ForgetTrackedObject(driver);
-                        driver = await GetAnalyzerDriverAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                }
+                // Wait for driver initialization to complete: this executes the Initialize and CompilationStartActions to compute all registered actions per-analyzer.
+                await driver.WhenInitializedTask.ConfigureAwait(false);
 
                 return driver;
             }
-            catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+            catch (OperationCanceledException)
             {
-                throw ExceptionUtilities.Unreachable;
+                FreeDriver(driver);
+                throw;
             }
         }
 
@@ -667,7 +655,8 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             if (driver != null)
             {
-                if (driver.WhenInitializedTask.IsCanceled)
+                // Throw away the driver instance if the initialization didn't succeed.
+                if (driver.WhenInitializedTask == null || driver.WhenInitializedTask.IsCanceled)
                 {
                     _driverPool.ForgetTrackedObject(driver);
                 }
@@ -997,7 +986,10 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         /// Delegate can do custom tasks such as report the given analyzer exception diagnostic, report a non-fatal watson for the exception, etc.
         /// </param>
         /// </summary>
-        public static bool IsDiagnosticAnalyzerSuppressed(DiagnosticAnalyzer analyzer, CompilationOptions options, Action<Exception, DiagnosticAnalyzer, Diagnostic> onAnalyzerException = null)
+        public static bool IsDiagnosticAnalyzerSuppressed(
+            DiagnosticAnalyzer analyzer,
+            CompilationOptions options,
+            Action<Exception, DiagnosticAnalyzer, Diagnostic> onAnalyzerException = null)
         {
             VerifyAnalyzerArgumentForStaticApis(analyzer);
 
@@ -1029,9 +1021,16 @@ namespace Microsoft.CodeAnalysis.Diagnostics
         {
             VerifyAnalyzerArgument(analyzer);
 
-            var actionCounts = await GetAnalyzerActionCountsAsync(analyzer, cancellationToken).ConfigureAwait(false);
-            var executionTime = GetAnalyzerExecutionTime(analyzer);
-            return new AnalyzerTelemetryInfo(actionCounts, executionTime);
+            try
+            {
+                var actionCounts = await GetAnalyzerActionCountsAsync(analyzer, cancellationToken).ConfigureAwait(false);
+                var executionTime = GetAnalyzerExecutionTime(analyzer);
+                return new AnalyzerTelemetryInfo(actionCounts, executionTime);
+            }
+            catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+            {
+                throw ExceptionUtilities.Unreachable;
+            }
         }
 
         /// <summary>

@@ -38,7 +38,7 @@ Public Class [|C|]
 End Class");
         }
 
-        [WorkItem(546241)]
+        [WorkItem(546241, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546241")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestInterface()
         {
@@ -145,7 +145,7 @@ Public Class C
 End Class");
         }
 
-        [WorkItem(546240)]
+        [WorkItem(546240, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546240")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestProperty()
         {
@@ -175,8 +175,8 @@ Public Class C
 End Class");
         }
 
-        [WorkItem(546194)]
-        [WorkItem(546291)]
+        [WorkItem(546194, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546194")]
+        [WorkItem(546291, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546291")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEvent()
         {
@@ -244,7 +244,7 @@ Public Class C
 End Class");
         }
 
-        [WorkItem(546195), WorkItem(546269)]
+        [WorkItem(546195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546195"), WorkItem(546269, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546269")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEnum()
         {
@@ -274,7 +274,7 @@ Public Enum [|E|]
 End Enum");
         }
 
-        [WorkItem(546195), WorkItem(546269)]
+        [WorkItem(546195, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546195"), WorkItem(546269, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546269")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEnumFromField()
         {
@@ -304,7 +304,7 @@ Public Enum E
 End Enum");
         }
 
-        [WorkItem(546273)]
+        [WorkItem(546273, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546273")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEnumWithUnderlyingType()
         {
@@ -334,7 +334,7 @@ Public Enum E As Short
 End Enum");
         }
 
-        [WorkItem(650741)]
+        [WorkItem(650741, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/650741")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEnumWithOverflowingUnderlyingType()
         {
@@ -389,7 +389,7 @@ Public Enum E As Short
 End Enum");
         }
 
-        [WorkItem(546198)]
+        [WorkItem(546198, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546198")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestTypeInNamespace()
         {
@@ -420,7 +420,7 @@ Namespace N
 End Namespace");
         }
 
-        [WorkItem(546223)]
+        [WorkItem(546223, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546223")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestInlineConstant()
         {
@@ -450,7 +450,7 @@ Public Class C
 End Class");
         }
 
-        [WorkItem(546221)]
+        [WorkItem(546221, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546221")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestInlineTypeOf()
         {
@@ -488,7 +488,7 @@ Public Class [|C|]
 End Class");
         }
 
-        [WorkItem(546231)]
+        [WorkItem(546231, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546231")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestNoDefaultConstructorInStructs()
         {
@@ -541,7 +541,7 @@ Public Class [|C|]
 End Class");
         }
 
-        [WorkItem(546227)]
+        [WorkItem(546227, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546227")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestGenericType()
         {
@@ -571,7 +571,7 @@ Public Class [|G|](Of SomeType)
 End Class");
         }
 
-        [WorkItem(546227)]
+        [WorkItem(546227, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546227")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestGenericDelegate()
         {
@@ -601,7 +601,7 @@ Public Class C
 End Class");
         }
 
-        [WorkItem(546200)]
+        [WorkItem(546200, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546200")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestAttribute()
         {
@@ -667,16 +667,9 @@ End Class");
 
             using (var context = await TestContext.CreateAsync())
             {
-                Assert.Throws<ArgumentException>(() =>
+                await Assert.ThrowsAsync<ArgumentException>(async () =>
                 {
-                    try
-                    {
-                        context.GenerateSource(namespaceSymbol);
-                    }
-                    catch (AggregateException ae)
-                    {
-                        throw ae.InnerException;
-                    }
+                    await context.GenerateSourceAsync(namespaceSymbol);
                 });
             }
         }
@@ -688,8 +681,8 @@ End Class");
 
             using (var context = await TestContext.CreateAsync(LanguageNames.CSharp, SpecializedCollections.SingletonEnumerable(metadataSource)))
             {
-                var a = context.GenerateSource("C");
-                var b = context.GenerateSource("C.Is");
+                var a = await context.GenerateSourceAsync("C");
+                var b = await context.GenerateSourceAsync("C.Is");
                 context.VerifyDocumentReused(a, b);
             }
         }
@@ -699,9 +692,23 @@ End Class");
         {
             using (var context = await TestContext.CreateAsync())
             {
-                var a = context.GenerateSource();
-                var b = context.GenerateSource();
+                var a = await context.GenerateSourceAsync();
+                var b = await context.GenerateSourceAsync();
                 context.VerifyDocumentReused(a, b);
+            }
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
+        public async Task TestWorkspaceContextHasReasonableProjectName()
+        {
+            using (var context = await TestContext.CreateAsync())
+            {
+                var compilation = await context.DefaultProject.GetCompilationAsync();
+                var result = await context.GenerateSourceAsync(compilation.ObjectType);
+                var openedDocument = context.GetDocument(result);
+
+                Assert.Equal(openedDocument.Project.AssemblyName, "mscorlib");
+                Assert.Equal(openedDocument.Project.Name, "mscorlib");
             }
         }
 
@@ -715,8 +722,8 @@ End Class");
                     .WithMetadataReferences(context.DefaultProject.MetadataReferences)
                     .WithCompilationOptions(new CS.CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-                var a = context.GenerateSource(project: context.DefaultProject);
-                var b = context.GenerateSource(project: project);
+                var a = await context.GenerateSourceAsync(project: context.DefaultProject);
+                var b = await context.GenerateSourceAsync(project: project);
                 context.VerifyDocumentReused(a, b);
             }
         }
@@ -731,25 +738,25 @@ End Class");
                     .WithMetadataReferences(context.DefaultProject.MetadataReferences)
                     .WithCompilationOptions(new VB.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-                var a = context.GenerateSource(project: context.DefaultProject);
-                var b = context.GenerateSource(project: project);
+                var a = await context.GenerateSourceAsync(project: context.DefaultProject);
+                var b = await context.GenerateSourceAsync(project: project);
                 context.VerifyDocumentNotReused(a, b);
             }
         }
 
-        [WorkItem(546311)]
+        [WorkItem(546311, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/546311")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task FormatMetadataAsSource()
         {
             using (var context = await TestContext.CreateAsync(LanguageNames.CSharp))
             {
-                var file = context.GenerateSource("System.Console", project: context.DefaultProject);
+                var file = await context.GenerateSourceAsync("System.Console", project: context.DefaultProject);
                 var document = context.GetDocument(file);
                 await Formatting.Formatter.FormatAsync(document);
             }
         }
 
-        [WorkItem(530829)]
+        [WorkItem(530829, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530829")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task IndexedProperty()
         {
@@ -780,7 +787,7 @@ public class C
             await GenerateAndVerifySourceAsync(metadataSource, symbolName, LanguageNames.CSharp, expected);
         }
 
-        [WorkItem(566688)]
+        [WorkItem(566688, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/566688")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task AttributeReferencingInternalNestedType()
         {
@@ -811,7 +818,7 @@ public class [|C|]
             await GenerateAndVerifySourceAsync(metadataSource, symbolName, LanguageNames.CSharp, expected);
         }
 
-        [WorkItem(530978)]
+        [WorkItem(530978, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530978")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestAttributesOnMembers()
         {
@@ -939,7 +946,7 @@ End Class
             await GenerateAndVerifySourceAsync(metadataSource, symbolName, LanguageNames.VisualBasic, expectedVB);
         }
 
-        [WorkItem(530923)]
+        [WorkItem(530923, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530923")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEmptyLineBetweenMembers()
         {
@@ -1030,7 +1037,7 @@ End Class";
             await GenerateAndVerifySourceAsync(metadataSource, symbolName, LanguageNames.VisualBasic, expectedVB, compareTokens: false);
         }
 
-        [WorkItem(728644)]
+        [WorkItem(728644, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/728644")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestEmptyLineBetweenMembers2()
         {
@@ -1095,7 +1102,7 @@ End Interface
             await GenerateAndVerifySourceAsync(source, symbolName, LanguageNames.VisualBasic, expectedVB, compareTokens: false, includeXmlDocComments: true);
         }
 
-        [WorkItem(679114), WorkItem(715013)]
+        [WorkItem(679114, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/679114"), WorkItem(715013, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/715013")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestDefaultValueEnum()
         {
@@ -1134,7 +1141,7 @@ End Class";
             await GenerateAndVerifySourceAsync(source, symbolName, LanguageNames.VisualBasic, expectedVB);
         }
 
-        [WorkItem(651261)]
+        [WorkItem(651261, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/651261")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestNullAttribute()
         {
@@ -1177,7 +1184,7 @@ End Class";
             await GenerateAndVerifySourceAsync(source, symbolName, LanguageNames.VisualBasic, expectedVB);
         }
 
-        [WorkItem(897006)]
+        [WorkItem(897006, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/897006")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestNavigationViaReducedExtensionMethodCS()
         {
@@ -1210,13 +1217,13 @@ public static class ObjectExtensions
                 includeXmlDocComments: false,
                 sourceWithSymbolReference: sourceWithSymbolReference))
             {
-                var navigationSymbol = context.GetNavigationSymbol();
-                var metadataAsSourceFile = context.GenerateSource(navigationSymbol);
+                var navigationSymbol = await context.GetNavigationSymbolAsync();
+                var metadataAsSourceFile = await context.GenerateSourceAsync(navigationSymbol);
                 context.VerifyResult(metadataAsSourceFile, expected);
             }
         }
 
-        [WorkItem(897006)]
+        [WorkItem(897006, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/897006")]
         [Fact, Trait(Traits.Feature, Traits.Features.MetadataAsSource)]
         public async Task TestNavigationViaReducedExtensionMethodVB()
         {
@@ -1254,8 +1261,8 @@ End Namespace";
                 includeXmlDocComments: false,
                 sourceWithSymbolReference: sourceWithSymbolReference))
             {
-                var navigationSymbol = context.GetNavigationSymbol();
-                var metadataAsSourceFile = context.GenerateSource(navigationSymbol);
+                var navigationSymbol = await context.GetNavigationSymbolAsync();
+                var metadataAsSourceFile = await context.GenerateSourceAsync(navigationSymbol);
                 context.VerifyResult(metadataAsSourceFile, expected);
             }
         }

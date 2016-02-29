@@ -36,7 +36,16 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 _currentlyAnalyzingDeclarationsMapPool = currentlyAnalyzingDeclarationsMapPool;
             }
 
-            public IEnumerable<CompilationEvent> PendingEvents_NoLock => _pendingEvents.Keys;
+            public void AddPendingEvents(HashSet<CompilationEvent> uniqueEvents)
+            {
+                lock (_gate)
+                {
+                    foreach (var pendingEvent in _pendingEvents.Keys)
+                    {
+                        uniqueEvents.Add(pendingEvent);
+                    }
+                }
+            }
 
             public bool HasPendingSyntaxAnalysis(SyntaxTree treeOpt)
             {
@@ -148,11 +157,11 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 {
                     return;
                 }
-                
+
                 DeclarationAnalyzerStateData state;
                 if (declarationDataMap.TryGetValue(declarationIndex, out state))
                 {
-                    FreeDeclarationAnalyzerState_NoLock(state);                    
+                    FreeDeclarationAnalyzerState_NoLock(state);
                 }
 
                 declarationDataMap[declarationIndex] = DeclarationAnalyzerStateData.FullyProcessedInstance;
@@ -167,7 +176,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                     _pendingDeclarations.Remove(symbol);
                 }
             }
-            
+
             private void FreeDeclarationDataMap_NoLock(Dictionary<int, DeclarationAnalyzerStateData> declarationDataMap)
             {
                 declarationDataMap.Clear();

@@ -50,7 +50,7 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.Rename
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(540120)>
+        <WorkItem(540120, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/540120")>
         Public Async Function SimpleEditAndVerifyTagsPropagatedAndCommit() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -117,7 +117,7 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.Rename
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(700921)>
+        <WorkItem(700921, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/700921")>
         Public Async Function RenameOverloadsCSharp() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -150,7 +150,7 @@ class Program
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(700921)>
+        <WorkItem(700921, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/700921")>
         Public Async Function RenameOverloadsVisualBasic() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -191,7 +191,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(960955)>
+        <WorkItem(960955, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/960955")>
         Public Async Function RenameParameterShouldNotAffectCommentsInOtherDocuments() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -215,7 +215,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(1040098)>
+        <WorkItem(1040098, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1040098")>
         Public Async Function RenameInLinkedFilesDoesNotCrash() As Task
             Dim workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -232,7 +232,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(1040098)>
+        <WorkItem(1040098, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1040098")>
         Public Async Function RenameInLinkedFilesHandlesBothProjects() As Task
             Dim workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -256,7 +256,7 @@ public partial class C { }
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(1040098)>
+        <WorkItem(1040098, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1040098")>
         Public Async Function RenameInLinkedFilesWithPrivateAccessibility() As Task
             Dim workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -285,7 +285,7 @@ public partial class C { }
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(1040098)>
+        <WorkItem(1040098, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1040098")>
         Public Async Function RenameInLinkedFilesWithPublicAccessibility() As Task
             Dim workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -333,7 +333,7 @@ public class [|$$C|] { }
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(700923), WorkItem(700925), WorkItem(1486, "https://github.com/dotnet/roslyn/issues/1486")>
+        <WorkItem(700923, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/700923"), WorkItem(700925, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/700925"), WorkItem(1486, "https://github.com/dotnet/roslyn/issues/1486")>
         Public Async Function RenameInCommentsAndStringsCSharp() As Task
             Dim workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -425,7 +425,7 @@ class Program
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(700923), WorkItem(700925), WorkItem(1486, "https://github.com/dotnet/roslyn/issues/1486")>
+        <WorkItem(700923, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/700923"), WorkItem(700925, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/700925"), WorkItem(1486, "https://github.com/dotnet/roslyn/issues/1486")>
         Public Async Function RenameInCommentsAndStringsVisualBasic() As Task
             Dim workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -542,9 +542,8 @@ End Class
             End Using
         End Sub
 
-
         <WpfFact>
-        <WorkItem(539513)>
+        <WorkItem(539513, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/539513")>
         <Trait(Traits.Feature, Traits.Features.Rename)>
         Public Async Function CanRenameTypeNamedDynamic() As Task
             Using workspace = CreateWorkspaceWithWaiter(
@@ -610,7 +609,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(543018)>
+        <WorkItem(543018, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543018")>
         Public Sub ReadOnlyRegionsCreatedWhichHandleBeginningOfFileEdgeCase()
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -668,7 +667,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(530467)>
+        <WorkItem(530467, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530467")>
         Public Async Function VerifyNoRenameTrackingAfterInlineRenameTyping() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -731,7 +730,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(579210)>
+        <WorkItem(579210, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/579210")>
         Public Async Function VerifyNoRenameTrackingAfterInlineRenameCommit() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -768,7 +767,7 @@ End Class
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(530765)>
+        <WorkItem(530765, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/530765")>
         Public Async Function VerifyNoRenameTrackingAfterInlineRenameCancel() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                     <Workspace>
@@ -841,7 +840,7 @@ End Class
             End Using
         End Function
 
-        <WpfFact, WorkItem(978099)>
+        <WpfFact, WorkItem(978099, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/978099")>
         <Trait(Traits.Feature, Traits.Features.Rename)>
         Public Async Function VerifyPreviewChangesCalled() As Task
             Using workspace = CreateWorkspaceWithWaiter(
@@ -1068,7 +1067,7 @@ class C
                 editHandler.Apply(
                     workspace,
                     workspace.CurrentSolution.GetDocument(workspace.Documents.Single().Id),
-                    actions.First().GetOperationsAsync(CancellationToken.None).Result,
+                    Await actions.First().GetOperationsAsync(CancellationToken.None),
                     "unused",
                     CancellationToken.None)
 
@@ -1254,7 +1253,7 @@ class C
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(1142095)>
+        <WorkItem(1142095, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1142095")>
         Public Async Function RenameCommitsWhenDebuggingStarts() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                 <Workspace>
@@ -1297,7 +1296,7 @@ class C
 
         <WpfFact>
         <Trait(Traits.Feature, Traits.Features.Rename)>
-        <WorkItem(1142095)>
+        <WorkItem(1142095, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/1142095")>
         Public Async Function RenameCommitsWhenExitingDebuggingBreakMode() As Task
             Using workspace = CreateWorkspaceWithWaiter(
                 <Workspace>
@@ -1400,6 +1399,50 @@ End Module
                 session.Commit()
 
                 Await VerifyTagsAreCorrect(workspace, "x")
+            End Using
+        End Function
+
+        <WpfFact>
+        <Trait(Traits.Feature, Traits.Features.Rename)>
+        <WorkItem(9117, "https://github.com/dotnet/roslyn/issues/9117")>
+        Public Async Function VerifyVBRenameCrashDoesNotRepro() As Task
+            Using workspace = CreateWorkspaceWithWaiter(
+                    <Workspace>
+                        <Project Language="Visual Basic" CommonReferences="true">
+                            <Document>
+Public Class Class1 
+  Public Property [|$$Field1|] As Integer
+End Class 
+
+Public Class Class2 
+  Public Shared Property DataSource As IEnumerable(Of Class1) 
+  Public ReadOnly Property Dict As IReadOnlyDictionary(Of Integer, IEnumerable(Of Class1)) = 
+  ( 
+    From data 
+    In DataSource 
+    Group By 
+    data.Field1
+    Into Group1 = Group 
+  ).ToDictionary( 
+    Function(group) group.Field1,
+    Function(group) group.Group1) 
+End Class 
+                            </Document>
+                        </Project>
+                    </Workspace>)
+
+                Dim session = StartSession(workspace)
+
+                ' Type a bit in the file
+                Dim caretPosition = workspace.Documents.Single(Function(d) d.CursorPosition.HasValue).CursorPosition.Value
+                Dim textBuffer = workspace.Documents.Single().TextBuffer
+
+                textBuffer.Delete(New Span(caretPosition, 1))
+                textBuffer.Insert(caretPosition, "x")
+
+                session.Commit()
+
+                Await VerifyTagsAreCorrect(workspace, "xield1")
             End Using
         End Function
     End Class

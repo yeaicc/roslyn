@@ -55,10 +55,15 @@ done
 run_make()
 {
     local is_good=false
-    
+ 
+    MAKE="make"
+    if [[ $OSTYPE == *[Bb][Ss][Dd]* ]]; then
+        MAKE="gmake"
+    fi
+
     for i in `seq 1 $RETRY_COUNT`
     do
-        make "$@" BUILD_CONFIGURATION=$BUILD_CONFIGURATION
+        $MAKE "$@" BUILD_CONFIGURATION=$BUILD_CONFIGURATION
         if [ $? -eq 0 ]; then
             is_good=true
             break
@@ -83,11 +88,14 @@ if [ "$USE_CACHE" == "false" ]; then
     make clean_toolset
 fi
 
+echo Building this commit:
+git show --no-patch --pretty=raw HEAD
+
 echo Building Bootstrap
 run_make bootstrap
 
 echo Building CrossPlatform.sln
 run_make all BOOTSTRAP=true BUILD_LOG_PATH=Binaries/Build.log
 
-make tests
+make test
 

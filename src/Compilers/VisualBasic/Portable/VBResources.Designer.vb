@@ -9145,6 +9145,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Property
         
         '''<summary>
+        '''  Looks up a localized string similar to Public sign was specified and requires a public key, but no public key was specified.
+        '''</summary>
+        Friend ReadOnly Property ERR_PublicSignNoKey() As String
+            Get
+                Return ResourceManager.GetString("ERR_PublicSignNoKey", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized string similar to &apos;:&apos; is not allowed. XML qualified names cannot be used in this context..
         '''</summary>
         Friend ReadOnly Property ERR_QualifiedNameNotAllowed() As String
@@ -10241,6 +10250,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Friend ReadOnly Property ERR_TooManyIndices() As String
             Get
                 Return ResourceManager.GetString("ERR_TooManyIndices", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to Combined length of user strings used by the program exceeds allowed limit. Try to decrease use of string or XML literals..
+        '''</summary>
+        Friend ReadOnly Property ERR_TooManyUserStrings() As String
+            Get
+                Return ResourceManager.GetString("ERR_TooManyUserStrings", resourceCulture)
             End Get
         End Property
         

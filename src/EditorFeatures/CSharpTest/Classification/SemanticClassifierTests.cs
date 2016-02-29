@@ -24,6 +24,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Roslyn.Test.Utilities;
 using Roslyn.Utilities;
 using Xunit;
+using Microsoft.CodeAnalysis.Editor.UnitTests;
 
 namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
 {
@@ -31,7 +32,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Classification
     {
         internal override async Task<IEnumerable<ClassifiedSpan>> GetClassificationSpansAsync(string code, TextSpan textSpan, CSharpParseOptions options)
         {
-            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromFileAsync(code, options))
+            using (var workspace = await TestWorkspace.CreateCSharpAsync(code, options))
             {
                 var document = workspace.CurrentSolution.GetDocument(workspace.Documents.First().Id);
 
@@ -1018,7 +1019,7 @@ class ObsoleteAttribute : Attribute { }",
             await TestAsync(@"enum E { E, F = E }");
         }
 
-        [WorkItem(541150)]
+        [WorkItem(541150, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541150")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestGenericVarClassification()
         {
@@ -1036,7 +1037,7 @@ class var<T> { }
 ", Keyword("var"));
         }
 
-        [WorkItem(541154)]
+        [WorkItem(541154, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541154")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestInaccessibleVarClassification()
         {
@@ -1059,7 +1060,7 @@ class B : A
                 Keyword("var"));
         }
 
-        [WorkItem(541154)]
+        [WorkItem(541154, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/541154")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestVarNamedTypeClassification()
         {
@@ -1103,7 +1104,7 @@ class C
                 Enum("E"));
         }
 
-        [WorkItem(542368)]
+        [WorkItem(542368, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542368")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task RegressionFor9572()
         {
@@ -1124,7 +1125,7 @@ class A<T,S> where T : A<T,S>.I, A<T,T>.I
                 Interface("I"));
         }
 
-        [WorkItem(542368)]
+        [WorkItem(542368, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542368")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task RegressionFor9831()
         {
@@ -1147,7 +1148,7 @@ public class X : B<X>
                 Class("A"));
         }
 
-        [WorkItem(542432)]
+        [WorkItem(542432, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542432")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestVar()
         {
@@ -1167,7 +1168,7 @@ public class X : B<X>
                 Class("var"));
         }
 
-        [WorkItem(543123)]
+        [WorkItem(543123, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543123")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestVar2()
         {
@@ -1182,7 +1183,7 @@ public class X : B<X>
                 Keyword("var"));
         }
 
-        [WorkItem(542778)]
+        [WorkItem(542778, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542778")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestDuplicateTypeParamWithConstraint()
         {
@@ -1200,7 +1201,7 @@ class C<T>
                 Interface("IEnumerable"));
         }
 
-        [WorkItem(542685)]
+        [WorkItem(542685, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542685")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task OptimisticallyColorFromInDeclaration()
         {
@@ -1208,7 +1209,7 @@ class C<T>
                 Keyword("from"));
         }
 
-        [WorkItem(542685)]
+        [WorkItem(542685, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542685")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task OptimisticallyColorFromInAssignment()
         {
@@ -1217,14 +1218,14 @@ class C<T>
                 Keyword("from"));
         }
 
-        [WorkItem(542685)]
+        [WorkItem(542685, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542685")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task DontColorThingsOtherThanFromInDeclaration()
         {
             await TestInExpressionAsync("fro ");
         }
 
-        [WorkItem(542685)]
+        [WorkItem(542685, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542685")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task DontColorThingsOtherThanFromInAssignment()
         {
@@ -1232,7 +1233,7 @@ class C<T>
                 Keyword("var"));
         }
 
-        [WorkItem(542685)]
+        [WorkItem(542685, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542685")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task DontColorFromWhenBoundInDeclaration()
         {
@@ -1243,7 +1244,7 @@ var q = from ",
                 Keyword("var"));
         }
 
-        [WorkItem(542685)]
+        [WorkItem(542685, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/542685")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task DontColorFromWhenBoundInAssignment()
         {
@@ -1255,7 +1256,7 @@ q = from ",
                 Keyword("var"));
         }
 
-        [WorkItem(543404)]
+        [WorkItem(543404, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/543404")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task NewOfClassWithOnlyPrivateConstructor()
         {
@@ -1274,7 +1275,7 @@ class Program
                 Class("X"));
         }
 
-        [WorkItem(544179)]
+        [WorkItem(544179, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544179")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestNullableVersusConditionalAmbiguity1()
         {
@@ -1293,7 +1294,7 @@ public class C1
                 Class("C1"));
         }
 
-        [WorkItem(544179)]
+        [WorkItem(544179, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544179")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestPointerVersusMultiplyAmbiguity1()
         {
@@ -1312,7 +1313,7 @@ public class C1
                 Class("C1"));
         }
 
-        [WorkItem(544302)]
+        [WorkItem(544302, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/544302")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task EnumTypeAssignedToNamedPropertyOfSameNameInAttributeCtor()
         {
@@ -1330,7 +1331,7 @@ class C
                 Enum("CallingConvention"));
         }
 
-        [WorkItem(531119)]
+        [WorkItem(531119, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/531119")]
         [Fact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task OnlyClassifyGenericNameOnce()
         {
@@ -1396,12 +1397,12 @@ class C
                 Keyword("var"));
         }
 
-        [WorkItem(744813)]
+        [WorkItem(744813, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/744813")]
         [WpfFact, Trait(Traits.Feature, Traits.Features.Classification)]
         public async Task TestCreateWithBufferNotInWorkspace()
         {
             // don't crash
-            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromFileAsync(""))
+            using (var workspace = await TestWorkspace.CreateCSharpAsync(""))
             {
                 var document = workspace.CurrentSolution.GetDocument(workspace.Documents.First().Id);
 
@@ -1410,26 +1411,27 @@ class C
                 var extraBuffer = workspace.ExportProvider.GetExportedValue<ITextBufferFactoryService>().CreateTextBuffer("", contentType);
 
                 WpfTestCase.RequireWpfFact("Creates an IWpfTextView explicitly with an unrelated buffer");
-                var textView = workspace.ExportProvider.GetExportedValue<ITextEditorFactoryService>().CreateTextView(extraBuffer);
-
-                var waiter = new Waiter();
-                var provider = new SemanticClassificationViewTaggerProvider(
-                    workspace.ExportProvider.GetExportedValue<IForegroundNotificationService>(),
-                    workspace.ExportProvider.GetExportedValue<ISemanticChangeNotificationService>(),
-                    workspace.ExportProvider.GetExportedValue<ClassificationTypeMap>(),
-                    SpecializedCollections.SingletonEnumerable(
-                        new Lazy<IAsynchronousOperationListener, FeatureMetadata>(
-                        () => waiter, new FeatureMetadata(new Dictionary<string, object>() { { "FeatureName", FeatureAttribute.Classification } }))));
-
-                using (var tagger = (IDisposable)provider.CreateTagger<IClassificationTag>(textView, extraBuffer))
+                using (var disposableView = workspace.ExportProvider.GetExportedValue<ITextEditorFactoryService>().CreateDisposableTextView(extraBuffer))
                 {
-                    using (var edit = extraBuffer.CreateEdit())
-                    {
-                        edit.Insert(0, "class A { }");
-                        edit.Apply();
-                    }
+                    var waiter = new Waiter();
+                    var provider = new SemanticClassificationViewTaggerProvider(
+                        workspace.ExportProvider.GetExportedValue<IForegroundNotificationService>(),
+                        workspace.ExportProvider.GetExportedValue<ISemanticChangeNotificationService>(),
+                        workspace.ExportProvider.GetExportedValue<ClassificationTypeMap>(),
+                        SpecializedCollections.SingletonEnumerable(
+                            new Lazy<IAsynchronousOperationListener, FeatureMetadata>(
+                            () => waiter, new FeatureMetadata(new Dictionary<string, object>() { { "FeatureName", FeatureAttribute.Classification } }))));
 
-                    await waiter.CreateWaitTask();
+                    using (var tagger = (IDisposable)provider.CreateTagger<IClassificationTag>(disposableView.TextView, extraBuffer))
+                    {
+                        using (var edit = extraBuffer.CreateEdit())
+                        {
+                            edit.Insert(0, "class A { }");
+                            edit.Apply();
+                        }
+
+                        await waiter.CreateWaitTask();
+                    }
                 }
             }
         }
@@ -1438,7 +1440,7 @@ class C
         public async Task TestGetTagsOnBufferTagger()
         {
             // don't crash
-            using (var workspace = await CSharpWorkspaceFactory.CreateWorkspaceFromFileAsync("class C { C c; }"))
+            using (var workspace = await TestWorkspace.CreateCSharpAsync("class C { C c; }"))
             {
                 var document = workspace.Documents.First();
 
