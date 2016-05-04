@@ -448,7 +448,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Debug.Assert(_lazyAssemblySymbol Is Nothing)
             If Me.EventQueue IsNot Nothing Then
-                Me.EventQueue.Enqueue(New CompilationStartedEvent(Me))
+                Me.EventQueue.TryEnqueue(New CompilationStartedEvent(Me))
             End If
         End Sub
 
@@ -1632,8 +1632,6 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Debug.Assert(AllSyntaxTrees.Contains(tree))
-            Dim completedCompilationUnit As Boolean = False
-            Dim completedCompilation As Boolean = False
 
             If _lazyCompilationUnitCompletedTrees Is Nothing Then
                 Interlocked.CompareExchange(_lazyCompilationUnitCompletedTrees, New HashSet(Of SyntaxTree)(), Nothing)
@@ -1641,21 +1639,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             SyncLock _lazyCompilationUnitCompletedTrees
                 If _lazyCompilationUnitCompletedTrees.Add(tree) Then
-                    completedCompilationUnit = True
+                    ' signal the end of the compilation unit
+                    EventQueue.TryEnqueue(New CompilationUnitCompletedEvent(Me, tree))
+
                     If _lazyCompilationUnitCompletedTrees.Count = SyntaxTrees.Length Then
-                        completedCompilation = True
+                        ' if that was the last tree, signal the end of compilation
+                        CompleteCompilationEventQueue_NoLock()
                     End If
                 End If
             End SyncLock
-
-            If completedCompilationUnit Then
-                EventQueue.Enqueue(New CompilationUnitCompletedEvent(Me, tree))
-            End If
-
-            If completedCompilation Then
-                EventQueue.Enqueue(New CompilationCompletedEvent(Me))
-                EventQueue.Complete() ' signal the End Of compilation events
-            End If
         End Sub
 
         Friend Function ShouldAddEvent(symbol As Symbol) As Boolean
@@ -1675,7 +1667,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Friend Sub SymbolDeclaredEvent(symbol As Symbol)
             If ShouldAddEvent(symbol) Then
-                EventQueue.Enqueue(New SymbolDeclaredCompilationEvent(Me, symbol))
+                EventQueue.TryEnqueue(New SymbolDeclaredCompilationEvent(Me, symbol))
             End If
         End Sub
 
@@ -1931,6 +1923,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 builder.AddRange(GetBoundReferenceManager().Diagnostics)
                 builder.AddRange(SourceAssembly.GetAllDeclarationErrors(cancellationToken))
                 builder.AddRange(GetClsComplianceDiagnostics(cancellationToken))
+
+                If EventQueue IsNot Nothing AndAlso SyntaxTrees.Length = 0 Then
+                    EnsureCompilationEventQueueCompleted()
+                End If
             End If
 
             ' Add method body compilation errors.
@@ -2651,6 +2647,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return New SymbolSearcher(Me).GetSymbolsWithName(predicate, filter, cancellationToken)
+        End Function
+
+        Friend Overrides Function IsIOperationFeatureEnabled() As Boolean
+            Dim options = DirectCast(Me.SyntaxTrees.First().Options, VisualBasicParseOptions)
+            Dim IOperationFeatureFlag = InternalSyntax.FeatureExtensions.GetFeatureFlag(InternalSyntax.Feature.IOperation)
+            If IOperationFeatureFlag IsNot Nothing Then
+                Return options.Features.ContainsKey(IOperationFeatureFlag)
+            End If
+            Return False
         End Function
 #End Region
 

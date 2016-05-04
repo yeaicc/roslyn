@@ -65,6 +65,7 @@ namespace Roslyn.Test.Utilities
             public const string CodeActionsMakeMethodSynchronous = "CodeActions.MakeMethodSynchronous";
             public const string CodeActionsMoveDeclarationNearReference = "CodeActions.MoveDeclarationNearReference";
             public const string CodeActionsMoveToTopOfFile = "CodeActions.MoveToTopOfFile";
+            public const string CodeActionsPopulateSwitch = "CodeActions.PopulateSwitch";
             public const string CodeActionsReplaceMethodWithProperty = "CodeActions.ReplaceMethodWithProperty";
             public const string CodeActionsRemoveByVal = "CodeActions.RemoveByVal";
             public const string CodeActionsRemoveUnnecessaryCast = "CodeActions.RemoveUnnecessaryCast";
@@ -115,6 +116,7 @@ namespace Roslyn.Test.Utilities
             public const string Options = nameof(Options);
             public const string Organizing = nameof(Organizing);
             public const string Outlining = nameof(Outlining);
+            public const string Packaging = nameof(Packaging);
             public const string Peek = nameof(Peek);
             public const string Progression = nameof(Progression);
             public const string ProjectSystemShims = nameof(ProjectSystemShims);
