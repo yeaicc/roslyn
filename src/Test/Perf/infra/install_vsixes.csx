@@ -2,12 +2,12 @@
 #r "./../../Roslyn.Test.Performance.Utilities.dll"
 
 // IsVerbose()
-#load "../util/test_util.csx"
+#load "../util/tools_util.csx"
 
 using System.IO;
 using Roslyn.Test.Performance.Utilities;
 
-TestUtilities.InitUtilities();
+TestUtilities.InitUtilitiesFromCsx();
 var directoryUtil = new RelativeDirectory();
 var logger = new ConsoleAndFileLogger();
 
@@ -25,6 +25,10 @@ var vsixes = new[]
 
 var installer = Path.Combine(binariesDirectory, "VSIXExpInstaller.exe");
 
+// Uninstall all previously installed VSIXes
+TestUtilities.ShellOutVital(installer, $"/rootSuffix:RoslynPerf /uninstallAll", IsVerbose(), logger, binariesDirectory);
+
+// Install the new VSIXes
 foreach (var vsix in vsixes)
 {
     TestUtilities.ShellOutVital(installer, $"/rootSuffix:RoslynPerf {vsix}", IsVerbose(), logger, binariesDirectory);

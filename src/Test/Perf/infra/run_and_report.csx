@@ -2,14 +2,16 @@
 #r "./../../Roslyn.Test.Performance.Utilities.dll"
 
 // IsVerbose()
-#load "../util/test_util.csx"
+#load "../util/tools_util.csx"
 // RunFile()
 #load "../util/runner_util.csx"
 
 using System.IO;
 using Roslyn.Test.Performance.Utilities;
 using static Roslyn.Test.Performance.Utilities.Tools;
+using static Roslyn.Test.Performance.Utilities.TestUtilities;
 
+InitUtilitiesFromCsx();
 var directoryUtil = new RelativeDirectory();
 var logger = new ConsoleAndFileLogger();
 

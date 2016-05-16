@@ -3,8 +3,9 @@
 #r "../../../Roslyn.Test.Performance.Utilities.dll"
 
 // TestThisPlease()
+#load "../../util/test_util.csx"
 // IsVerbose()
-#load "./../../util/test_util.csx"
+#load "../../util/tools_util.csx"
 
 using System.IO;
 using Roslyn.Test.Performance.Utilities;
@@ -25,16 +26,16 @@ class HelloWorldTest : PerfTest
     public override void Setup() 
     {
         _pathToHelloWorld = Path.Combine(MyWorkingDirectory, "HelloWorld.cs");
-        _pathToOutput = Path.Combine(MyArtifactsDirectory, "HelloWorld.exe");
+        _pathToOutput = Path.Combine(TempDirectory, "HelloWorld.exe");
     }
     
     public override void Test() 
     {
-        ShellOutVital(ReleaseCscPath, _pathToHelloWorld + " /out:" + _pathToOutput, IsVerbose(), _logger);
+        ShellOutVital(Path.Combine(MyBinaries(), "csc.exe"), _pathToHelloWorld + " /out:" + _pathToOutput, IsVerbose(), _logger, workingDirectory: MyWorkingDirectory);
         _logger.Flush();
     }
     
-    public override int Iterations => 2;
+    public override int Iterations => 1;
     public override string Name => "hello world";
     public override string MeasuredProc => "csc";
     public override bool ProvidesScenarios => false;
