@@ -91,14 +91,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\..\Compilers\Core\CommandLine\AssemblyIdentityUtils.cs">
-      <Link>AssemblyIdentityUtils.cs</Link>
-    </Compile>
-    <Compile Include="..\..\..\Compilers\Shared\AbstractAnalyzerAssemblyLoader.cs">
-      <Link>AbstractAnalyzerAssemblyLoader.cs</Link>
-    </Compile>
-    <Compile Include="..\..\..\Compilers\Shared\SimpleAnalyzerAssemblyLoader.cs">
-      <Link>SimpleAnalyzerAssemblyLoader.cs</Link>
+    <Compile Include="..\..\..\Compilers\Shared\DesktopAnalyzerAssemblyLoader.cs">
+      <Link>DesktopAnalyzerAssemblyLoader.cs</Link>
     </Compile>
     <Compile Include="AppDomainUtils.cs" />
     <Compile Include="CLRHelpers.cs" />
@@ -120,7 +114,9 @@
     <Compile Include="MetadataSignatureHelper.cs" />
     <Compile Include="MetadataSignatureUnitTestHelper.cs" />
     <Compile Include="ProcessResult.cs" />
-    <Compile Include="ReflectionAssert.cs" />
+    <Compile Include="..\Portable\ReflectionAssert.cs" >
+      <Link>ReflectionAssert.cs</Link>
+    </Compile>
     <Compile Include="IlasmUtilities.cs" />
     <Compile Include="SigningTestHelpers.cs" />
     <Compile Include="TestHelpers.cs" />
