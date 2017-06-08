@@ -29,12 +29,15 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using static Microsoft.CodeAnalysis.Utilities.ForegroundThreadDataKind;
 using Task = System.Threading.Tasks.Task;
+using Microsoft.CodeAnalysis.Options;
+using Microsoft.VisualStudio.LanguageServices.Telemetry;
+using Microsoft.CodeAnalysis.Experiments;
 
 namespace Microsoft.VisualStudio.LanguageServices.Setup
 {
     [Guid(Guids.RoslynPackageIdString)]
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    [ProvideMenuResource("Menus.ctmenu", version: 13)]
+    [ProvideMenuResource("Menus.ctmenu", version: 16)]
     internal class RoslynPackage : AbstractPackage
     {
         private LibraryManager _libraryManager;
@@ -60,18 +63,16 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             var method = compilerFailFast.GetMethod(nameof(FailFast.OnFatalException), BindingFlags.Static | BindingFlags.NonPublic);
             property.SetValue(null, Delegate.CreateDelegate(property.PropertyType, method));
 
-            InitializePortableShim(compilerAssembly);
+            var componentModel = (IComponentModel)this.GetService(typeof(SComponentModel));
+            _workspace = componentModel.GetService<VisualStudioWorkspace>();
+            _workspace.Services.GetService<IExperimentationService>();
 
             RegisterFindResultsLibraryManager();
 
-            var componentModel = (IComponentModel)this.GetService(typeof(SComponentModel));
-            _workspace = componentModel.GetService<VisualStudioWorkspace>();
+            // Ensure the options persisters are loaded since we have to fetch options from the shell
+            componentModel.GetExtensions<IOptionPersister>();
 
-            var telemetrySetupExtensions = componentModel.GetExtensions<IRoslynTelemetrySetup>();
-            foreach (var telemetrySetup in telemetrySetupExtensions)
-            {
-                telemetrySetup.Initialize(this);
-            }
+            RoslynTelemetrySetup.Initialize(this);
 
             // set workspace output pane
             _outputPane = new WorkspaceFailureOutputPane(this, _workspace);
@@ -82,25 +83,6 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             LoadComponentsInUIContextOnceSolutionFullyLoaded();
 
             _solutionEventMonitor = new SolutionEventMonitor(_workspace);
-        }
-
-        private static void InitializePortableShim(Assembly compilerAssembly)
-        {
-            // We eagerly force all of the types to be loaded within the PortableShim because there are scenarios
-            // in which loading types can trigger the current AppDomain's AssemblyResolve or TypeResolve events.
-            // If handlers of those events do anything that would cause PortableShim to be accessed recursively,
-            // bad things can happen. In particular, this fixes the scenario described in TFS bug #1185842.
-            //
-            // Note that the fix below is written to be as defensive as possible to do no harm if it impacts other
-            // scenarios.
-
-            // Initialize the PortableShim linked into the Workspaces layer.
-            Roslyn.Utilities.PortableShim.Initialize();
-
-            // Initialize the PortableShim linked into the Compilers layer via reflection.
-            var compilerPortableShim = compilerAssembly.GetType("Roslyn.Utilities.PortableShim", throwOnError: false);
-            var initializeMethod = compilerPortableShim?.GetMethod(nameof(Roslyn.Utilities.PortableShim.Initialize), BindingFlags.Static | BindingFlags.NonPublic);
-            initializeMethod?.Invoke(null, null);
         }
 
         private void InitializeColors()
@@ -125,7 +107,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             this.ComponentModel.GetService<VisualStudioDiagnosticListTableCommandHandler>().Initialize(this);
 
             this.ComponentModel.GetService<HACK_ThemeColorFixer>();
-            this.ComponentModel.GetExtensions<IReferencedSymbolsPresenter>();
+            this.ComponentModel.GetExtensions<IDefinitionsAndReferencesPresenter>();
             this.ComponentModel.GetExtensions<INavigableItemsPresenter>();
             this.ComponentModel.GetService<VisualStudioMetadataAsSourceFileSupportService>();
             this.ComponentModel.GetService<VirtualMemoryNotificationListener>();
@@ -179,7 +161,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
         {
             UnregisterFindResultsLibraryManager();
 
-            DisposeVisualStudioDocumentTrackingService();
+            DisposeVisualStudioServices();
 
             UnregisterAnalyzerTracker();
             UnregisterRuleSetEventHandler();
@@ -206,7 +188,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             var objectManager = this.GetService(typeof(SVsObjectManager)) as IVsObjectManager2;
             if (objectManager != null)
             {
-                _libraryManager = new LibraryManager(this);
+                _libraryManager = new LibraryManager(_workspace, this);
 
                 if (ErrorHandler.Failed(objectManager.RegisterSimpleLibrary(_libraryManager, out _libraryManagerCookie)))
                 {
@@ -233,12 +215,14 @@ namespace Microsoft.VisualStudio.LanguageServices.Setup
             }
         }
 
-        private void DisposeVisualStudioDocumentTrackingService()
+        private void DisposeVisualStudioServices()
         {
             if (_workspace != null)
             {
                 var documentTrackingService = _workspace.Services.GetService<IDocumentTrackingService>() as VisualStudioDocumentTrackingService;
                 documentTrackingService.Dispose();
+
+                _workspace.Services.GetService<VisualStudioMetadataReferenceManager>().DisconnectFromVisualStudioNativeServices();
             }
         }
 

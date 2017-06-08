@@ -764,7 +764,8 @@ namespace N1
             Await TestAsync(input, expected)
         End Function
 
-        <Fact, Trait(Traits.Feature, Traits.Features.Simplification)>
+        <Fact(Skip:="https://github.com/dotnet/roslyn/issues/19368")>
+        <Trait(Traits.Feature, Traits.Features.Simplification)>
         Public Async Function TestSimplifyNot_Delegate1() As Task
             Dim input =
         <Workspace>
@@ -4204,7 +4205,7 @@ End Module
         </Document>
     </Project>
 </Workspace>
-            Using workspace = Await TestWorkspace.CreateAsync(input)
+            Using workspace = TestWorkspace.Create(input)
                 Dim hostDocument = workspace.Documents.Single()
                 Dim document = workspace.CurrentSolution.Projects.Single().Documents.Single()
                 Dim root = Await document.GetSyntaxRootAsync()
@@ -5846,7 +5847,7 @@ End Class
             Return New Dictionary(Of OptionKey, Object) From {{New OptionKey(CodeStyleOptions.QualifyPropertyAccess, languageName), New CodeStyleOption(Of Boolean)(True, notification)}}
         End Function
 
-        Shared DontPreferIntrinsicPredefinedTypeKeywordInDeclaration As Dictionary(Of OptionKey, Object) = New Dictionary(Of OptionKey, Object) From {{New OptionKey(SimplificationOptions.PreferIntrinsicPredefinedTypeKeywordInDeclaration, LanguageNames.VisualBasic), False}}
+        Shared DontPreferIntrinsicPredefinedTypeKeywordInDeclaration As Dictionary(Of OptionKey, Object) = New Dictionary(Of OptionKey, Object) From {{New OptionKey(CodeStyleOptions.PreferIntrinsicPredefinedTypeKeywordInDeclaration, LanguageNames.VisualBasic), CodeStyleOption(Of Boolean).Default}}
 
 #End Region
 

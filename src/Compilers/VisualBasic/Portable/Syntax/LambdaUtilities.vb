@@ -2,7 +2,6 @@
 
 Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 Imports System.Runtime.InteropServices
-Imports System.Collections.Immutable
 
 Namespace Microsoft.CodeAnalysis.VisualBasic
 
@@ -89,7 +88,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return If(oldJoinCondition.Left Is oldBody, GetJoinLeftLambdaBody(newJoinClause), GetJoinRightLambdaBody(newJoinClause))
 
                 Case Else
-                    Throw ExceptionUtilities.Unreachable
+                    Throw ExceptionUtilities.UnexpectedValue(oldLambda.Kind)
             End Select
         End Function
 
@@ -588,7 +587,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return DirectCast(clause, JoinClauseSyntax).JoinedVariables
 
                 Case Else
-                    Throw ExceptionUtilities.Unreachable
+                    Throw ExceptionUtilities.UnexpectedValue(clause.Kind)
             End Select
         End Function
 
@@ -676,6 +675,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.MultiLineFunctionLambdaExpression,
                      SyntaxKind.MultiLineSubLambdaExpression
                     ' lambda expression body closure
+                    Return True
+
+                Case SyntaxKind.ClassBlock, SyntaxKind.StructureBlock, SyntaxKind.ModuleBlock
+                    ' With dynamic analysis instrumentation, a type declaration can be the syntax associated
+                    ' with the analysis payload local of a synthesized constructor.
+                    ' If the synthesized constructor includes an initializer with a lambda,
+                    ' that lambda needs a closure that captures the analysis payload of the constructor.
                     Return True
 
                 Case Else

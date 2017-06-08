@@ -22,9 +22,10 @@ Namespace Tests
                 code As String, position As Integer,
                 expectedItemOrNull As String, expectedDescriptionOrNull As String,
                 sourceCodeKind As SourceCodeKind, usePreviousCharAsTrigger As Boolean,
-                checkForAbsence As Boolean, glyph As Integer?, matchPriority As Integer?) As Task
-            Await VerifyAtPositionAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, glyph, matchPriority)
-            Await VerifyAtEndOfFileAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, glyph, matchPriority)
+                checkForAbsence As Boolean, glyph As Integer?, matchPriority As Integer?,
+                hasSuggestionItem As Boolean?) As Task
+            Await VerifyAtPositionAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, glyph, matchPriority, hasSuggestionItem)
+            Await VerifyAtEndOfFileAsync(code, position, usePreviousCharAsTrigger, expectedItemOrNull, expectedDescriptionOrNull, sourceCodeKind, checkForAbsence, glyph, matchPriority, hasSuggestionItem)
         End Function
 
         Private Async Function VerifyItemsExistAsync(markup As String, ParamArray items() As String) As Task
@@ -290,6 +291,53 @@ End Class
 "
 
             Await VerifyItemIsAbsentAsync(text, "param name=""bar""")
+        End Function
+
+        <WorkItem(11487, "https://github.com/dotnet/roslyn/issues/11487")>
+        <Fact, Trait(Traits.Feature, Traits.Features.Completion)>
+        Public Async Function TestNoRepeatTypeParam() As Task
+            Dim text = "
+Class C(Of T)
+    ''' <typeparam name=""T""></param>
+    ''' <$$
+    Sub Foo(Of T)(bar as T)
+    End Sub
+End Class
+"
+
+            Await VerifyItemIsAbsentAsync(text, "typeparam name=""T""")
+        End Function
+
+        <WorkItem(11487, "https://github.com/dotnet/roslyn/issues/11487")>
+        <Fact, Trait(Traits.Feature, Traits.Features.Completion)>
+        Public Async Function TestNoNestedParam() As Task
+            Dim text = "
+Class C(Of T)
+    ''' <summary>
+    ''' <$$
+    ''' </summary>
+    Sub Foo(Of T)(bar as T)
+    End Sub
+End Class
+"
+
+            Await VerifyItemIsAbsentAsync(text, "param name=""bar""")
+        End Function
+
+        <WorkItem(11487, "https://github.com/dotnet/roslyn/issues/11487")>
+        <Fact, Trait(Traits.Feature, Traits.Features.Completion)>
+        Public Async Function TestNoNestedTypeParam() As Task
+            Dim text = "
+Class C(Of T)
+    ''' <summary>
+    ''' <$$
+    ''' </summary>
+    Sub Foo(Of T)(bar as T)
+    End Sub
+End Class
+"
+
+            Await VerifyItemIsAbsentAsync(text, "typeparam name=""T""")
         End Function
 
         <Fact, Trait(Traits.Feature, Traits.Features.Completion)>

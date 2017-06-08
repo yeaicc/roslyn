@@ -29,7 +29,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion
                 new NamedParameterCompletionProvider(),
                 new KeywordCompletionProvider(),
                 new SymbolCompletionProvider(),
-                new ExplicitInterfaceCompletionProvider(),
+                new ExplicitInterfaceMemberCompletionProvider(),
+                new ExplicitInterfaceTypeCompletionProvider(),
                 new ObjectCreationCompletionProvider(),
                 new ObjectInitializerCompletionProvider(),
                 new SpeculativeTCompletionProvider(),
@@ -39,8 +40,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion
                 new SnippetCompletionProvider(),
                 new ExternAliasCompletionProvider(),
                 new OverrideCompletionProvider(),
-                new PartialCompletionProvider(),
-                new XmlDocCommentCompletionProvider()
+                new PartialMethodCompletionProvider(),
+                new PartialTypeCompletionProvider(),
+                new XmlDocCommentCompletionProvider(),
+                new TupleNameCompletionProvider(),
+                new DeclarationNameCompletionProvider()
             );
 
         private readonly Workspace _workspace;
@@ -59,7 +63,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion
             return _defaultCompletionProviders;
         }
 
-        public override TextSpan GetDefaultItemSpan(SourceText text, int caretPosition)
+        public override TextSpan GetDefaultCompletionListSpan(SourceText text, int caretPosition)
         {
             return CompletionUtilities.GetCompletionItemSpan(text, caretPosition);
         }

@@ -91,8 +91,7 @@ namespace RunTests
                     lowPriority: false,
                     displayWindow: false,
                     captureOutput: true,
-                    cancellationToken: cancellationToken,
-                    processMonitor: p => CrashDumps.TryMonitorProcess(p, dumpOutputFilePath)).ConfigureAwait(false);
+                    cancellationToken: cancellationToken);
                 var span = DateTime.UtcNow - start;
 
                 if (processOutput.ExitCode != 0)
@@ -123,17 +122,19 @@ namespace RunTests
                 Logger.Log($"Command line {assemblyInfo.DisplayName}: {commandLine}");
                 var standardOutput = string.Join(Environment.NewLine, processOutput.OutputLines) ?? "";
                 var errorOutput = string.Join(Environment.NewLine, processOutput.ErrorLines) ?? "";
-
-                return new TestResult(
+                var testResultInfo = new TestResultInfo(
                     exitCode: processOutput.ExitCode,
-                    assemblyInfo: assemblyInfo,
-                    resultDir: resultsDir,
+                    resultsDirectory: resultsDir,
                     resultsFilePath: resultsFilePath,
-                    commandLine: commandLine,
                     elapsed: span,
                     standardOutput: standardOutput,
-                    errorOutput: errorOutput,
-                    isResultFromCache: false);
+                    errorOutput: errorOutput);
+
+                return new TestResult(
+                    assemblyInfo,
+                    testResultInfo,
+                    commandLine,
+                    isFromCache: false);
             }
             catch (Exception ex)
             {

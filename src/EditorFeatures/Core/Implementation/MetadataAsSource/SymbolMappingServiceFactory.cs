@@ -4,9 +4,9 @@ using System;
 using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Editor.SymbolMapping;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.SymbolMapping;
 
 namespace Microsoft.CodeAnalysis.Editor.Implementation.MetadataAsSource
 {
@@ -26,7 +26,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.MetadataAsSource
                 var workspace = document.Project.Solution.Workspace as MetadataAsSourceWorkspace;
                 if (workspace == null)
                 {
-                    throw new ArgumentException(EditorFeaturesResources.DocumentMustBeContainedInWorkspace, nameof(document));
+                    throw new ArgumentException(EditorFeaturesResources.Document_must_be_contained_in_the_workspace_that_created_this_service, nameof(document));
                 }
 
                 return workspace.FileService.MapSymbolAsync(document, symbolId, cancellationToken);

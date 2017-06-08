@@ -80,16 +80,18 @@ $$");
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
-        public async Task TestNotInCastType()
+        public async Task TestInCastType()
         {
-            await VerifyAbsenceAsync(AddInsideMethod(
+            // Could be a deconstruction
+            await VerifyKeywordAsync(AddInsideMethod(
 @"var str = (($$"));
         }
 
         [Fact, Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
-        public async Task TestNotInCastType2()
+        public async Task TestInCastType2()
         {
-            await VerifyAbsenceAsync(AddInsideMethod(
+            // Could be a deconstruction
+            await VerifyKeywordAsync(AddInsideMethod(
 @"var str = (($$)items) as string;"));
         }
 
@@ -248,6 +250,23 @@ $$"));
             await VerifyAbsenceAsync(
 @"class C {
      void M1(out $$");
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
+        public async Task TestVarPatternInSwitch()
+        {
+            await VerifyKeywordAsync(AddInsideMethod(
+@"switch(o)
+    {
+        case $$
+    }
+"));
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.KeywordRecommending)]
+        public async Task TestVarPatternInIs()
+        {
+            await VerifyKeywordAsync(AddInsideMethod("var b = o is $$ "));
         }
     }
 }

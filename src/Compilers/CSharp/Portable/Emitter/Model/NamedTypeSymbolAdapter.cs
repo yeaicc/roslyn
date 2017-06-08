@@ -1,10 +1,12 @@
 ﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using Microsoft.Cci;
 using Microsoft.CodeAnalysis.CSharp.Emit;
 using Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE;
 using Microsoft.CodeAnalysis.Emit;
@@ -41,16 +43,19 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             return AsTypeDefinitionImpl(moduleBeingBuilt);
         }
 
-        Cci.PrimitiveTypeCode Cci.ITypeReference.TypeCode(EmitContext context)
+        Cci.PrimitiveTypeCode Cci.ITypeReference.TypeCode
         {
-            Debug.Assert(this.IsDefinitionOrDistinct());
-
-            if (this.IsDefinition)
+            get
             {
-                return this.PrimitiveTypeCode;
-            }
+                Debug.Assert(this.IsDefinitionOrDistinct());
 
-            return Cci.PrimitiveTypeCode.NotPrimitive;
+                if (this.IsDefinition)
+                {
+                    return this.PrimitiveTypeCode;
+                }
+
+                return Cci.PrimitiveTypeCode.NotPrimitive;
+            }
         }
 
         TypeDefinitionHandle Cci.ITypeReference.TypeDef
@@ -282,12 +287,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                                                                    diagnostics: context.Diagnostics) : null;
         }
 
-        IEnumerable<Cci.IEventDefinition> Cci.ITypeDefinition.Events
+        IEnumerable<Cci.IEventDefinition> Cci.ITypeDefinition.GetEvents(EmitContext context)
         {
-            get
+            CheckDefinitionInvariant();
+            foreach (var e in GetEventsToEmit())
             {
-                CheckDefinitionInvariant();
-                return GetEventsToEmit();
+                if (e.ShouldInclude(context))
+                {
+                    yield return e;
+                }
             }
         }
 
@@ -384,9 +392,15 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         {
             CheckDefinitionInvariant();
 
+            // All fields in a struct should be emitted
+            bool isStruct = this.IsStructType();
+
             foreach (var f in GetFieldsToEmit())
             {
-                yield return f;
+                if (isStruct || f.ShouldInclude(context))
+                {
+                    yield return f;
+                }
             }
 
             IEnumerable<Cci.IFieldDefinition> generated = ((PEModuleBuilder)context.Module).GetSynthesizedFields(this);
@@ -395,7 +409,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 foreach (var f in generated)
                 {
-                    yield return f;
+                    if (isStruct || f.ShouldInclude(context))
+                    {
+                        yield return f;
+                    }
                 }
             }
         }
@@ -430,7 +447,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             get { return (ushort)this.Arity; }
         }
 
-        IEnumerable<Cci.ITypeReference> Cci.ITypeDefinition.Interfaces(EmitContext context)
+        IEnumerable<Cci.TypeReferenceWithAttributes> Cci.ITypeDefinition.Interfaces(EmitContext context)
         {
             Debug.Assert(((Cci.ITypeReference)this).AsTypeDefinition(context) != null);
 
@@ -438,10 +455,14 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
             foreach (NamedTypeSymbol @interface in this.GetInterfacesToEmit())
             {
-                yield return moduleBeingBuilt.Translate(@interface,
-                                                        syntaxNodeOpt: (CSharpSyntaxNode)context.SyntaxNodeOpt,
-                                                        diagnostics: context.Diagnostics,
-                                                        fromImplements: true);
+                var typeRef = moduleBeingBuilt.Translate(
+                    @interface,
+                    syntaxNodeOpt: (CSharpSyntaxNode)context.SyntaxNodeOpt,
+                    diagnostics: context.Diagnostics,
+                    fromImplements: true);
+
+                yield return @interface.GetTypeRefWithAttributes(this.DeclaringCompilation,
+                                                                 typeRef);
             }
         }
 
@@ -621,7 +642,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             foreach (var method in this.GetMethodsToEmit())
             {
                 Debug.Assert((object)method != null);
-                yield return method;
+                if (method.ShouldInclude(context))
+                {
+                    yield return method;
+                }
             }
 
             IEnumerable<Cci.IMethodDefinition> generated = ((PEModuleBuilder)context.Module).GetSynthesizedMethods(this);
@@ -630,7 +654,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 foreach (var m in generated)
                 {
-                    yield return m;
+                    if (m.ShouldInclude(context))
+                    {
+                        yield return m;
+                    }
                 }
             }
         }
@@ -664,12 +691,6 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
                     }
 
                     yield return method;
-
-                    // Replaced methods are not included in GetMembers().
-                    foreach (MethodSymbol replaced in method.GetReplacedMembers())
-                    {
-                        yield return replaced;
-                    }
                 }
             }
         }
@@ -701,7 +722,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             foreach (var property in this.GetPropertiesToEmit())
             {
                 Debug.Assert((object)property != null);
-                yield return property;
+                if (property.ShouldInclude(context))
+                {
+                    yield return property;
+                }
             }
 
             IEnumerable<Cci.IPropertyDefinition> generated = ((PEModuleBuilder)context.Module).GetSynthesizedProperties(this);
@@ -710,7 +734,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 foreach (var m in generated)
                 {
-                    yield return m;
+                    if (m.ShouldInclude(context))
+                    {
+                        yield return m;
+                    }
                 }
             }
         }
@@ -893,22 +920,21 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             var builder = ArrayBuilder<Microsoft.Cci.ITypeReference>.GetInstance();
             Debug.Assert(((Cci.ITypeReference)this).AsGenericTypeInstanceReference != null);
 
-            var modifiers = default(ImmutableArray<ImmutableArray<CustomModifier>>);
-
-            if (this.HasTypeArgumentsCustomModifiers)
-            {
-                modifiers = this.TypeArgumentsCustomModifiers;
-            }
-
+            bool hasModifiers = this.HasTypeArgumentsCustomModifiers;
             var arguments = this.TypeArgumentsNoUseSiteDiagnostics;
 
             for (int i = 0; i < arguments.Length; i++)
             {
                 var arg = moduleBeingBuilt.Translate(arguments[i], syntaxNodeOpt: (CSharpSyntaxNode)context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
 
-                if (!modifiers.IsDefault && !modifiers[i].IsDefaultOrEmpty)
+                if (hasModifiers)
                 {
-                    arg = new Cci.ModifiedTypeReference(arg, modifiers[i].As<Cci.ICustomModifier>());
+                    var modifiers = this.GetTypeArgumentCustomModifiers(i);
+
+                    if (!modifiers.IsDefaultOrEmpty)
+                    {
+                        arg = new Cci.ModifiedTypeReference(arg, modifiers.As<Cci.ICustomModifier>());
+                    }
                 }
 
                 builder.Add(arg);
@@ -917,33 +943,26 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             return builder.ToImmutableAndFree();
         }
 
-        Cci.INamedTypeReference Cci.IGenericTypeInstanceReference.GenericType
+        Cci.INamedTypeReference Cci.IGenericTypeInstanceReference.GetGenericType(EmitContext context)
         {
-            get
-            {
-                Debug.Assert(((Cci.ITypeReference)this).AsGenericTypeInstanceReference != null);
-                return GenericTypeImpl;
-            }
+            Debug.Assert(((Cci.ITypeReference)this).AsGenericTypeInstanceReference != null);
+            return GenericTypeImpl(context);
         }
 
-        private Cci.INamedTypeReference GenericTypeImpl
+        private Cci.INamedTypeReference GenericTypeImpl(EmitContext context)
         {
-            get
-            {
-                return this.OriginalDefinition;
-            }
+            PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
+            return moduleBeingBuilt.Translate(this.OriginalDefinition, syntaxNodeOpt: (CSharpSyntaxNode)context.SyntaxNodeOpt, 
+                                              diagnostics: context.Diagnostics, needDeclaration:true); 
         }
 
-        Cci.INestedTypeReference Cci.ISpecializedNestedTypeReference.UnspecializedVersion
+        Cci.INestedTypeReference Cci.ISpecializedNestedTypeReference.GetUnspecializedVersion(EmitContext context)
         {
-            get
-            {
-                Debug.Assert(((Cci.ITypeReference)this).AsSpecializedNestedTypeReference != null);
-                var result = GenericTypeImpl.AsNestedTypeReference;
+            Debug.Assert(((Cci.ITypeReference)this).AsSpecializedNestedTypeReference != null);
+            var result = GenericTypeImpl(context).AsNestedTypeReference;
 
-                Debug.Assert(result != null);
-                return result;
-            }
+            Debug.Assert(result != null);
+            return result;
         }
     }
 }

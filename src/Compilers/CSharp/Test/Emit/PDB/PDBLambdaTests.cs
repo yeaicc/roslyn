@@ -543,6 +543,7 @@ class C : B
       </customDebugInfo>
       <sequencePoints>
         <entry offset=""0x0"" hidden=""true"" />
+        <entry offset=""0x14"" startLine=""13"" startColumn=""30"" endLine=""13"" endColumn=""43"" />
         <entry offset=""0x27"" hidden=""true"" />
         <entry offset=""0x2d"" startLine=""14"" startColumn=""5"" endLine=""14"" endColumn=""6"" />
         <entry offset=""0x2e"" startLine=""15"" startColumn=""9"" endLine=""15"" endColumn=""19"" />
@@ -654,7 +655,7 @@ class C
         <forward declaringType=""C"" methodName=""M"" />
       </customDebugInfo>
       <sequencePoints>
-        <entry offset=""0x0"" startLine=""10"" startColumn=""17"" endLine=""10"" endColumn=""30"" />
+        <entry offset=""0x0"" startLine=""10"" startColumn=""25"" endLine=""10"" endColumn=""30"" />
       </sequencePoints>
     </method>
     <method containingType=""C+&lt;&gt;c"" name=""&lt;M&gt;b__0_1"" parameterNames=""&lt;&gt;h__TransparentIdentifier0"">
@@ -1313,8 +1314,10 @@ class C
         <entry offset=""0x4f"" startLine=""18"" startColumn=""13"" endLine=""18"" endColumn=""25"" />
         <entry offset=""0x61"" startLine=""19"" startColumn=""9"" endLine=""19"" endColumn=""10"" />
         <entry offset=""0x64"" hidden=""true"" />
+        <entry offset=""0x78"" hidden=""true"" />
         <entry offset=""0x79"" hidden=""true"" />
         <entry offset=""0x7b"" hidden=""true"" />
+        <entry offset=""0x8f"" hidden=""true"" />
         <entry offset=""0x90"" startLine=""20"" startColumn=""5"" endLine=""20"" endColumn=""6"" />
       </sequencePoints>
       <scope startOffset=""0x0"" endOffset=""0x91"">

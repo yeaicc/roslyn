@@ -1446,6 +1446,10 @@ class foo{int x = 0;}", false, changingOptions);
         {
         };
 
+        async void LocalFunction()
+        {
+        }
+
         try
         {
         }
@@ -1505,6 +1509,9 @@ var obj1 = new foo
             {
                             };
 
+        async void LocalFunction() {
+        }
+
            try
         {
         }
@@ -1538,17 +1545,18 @@ public class foo : System.Object
         }
 
         [WorkItem(751789, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/751789")]
+        [WorkItem(8808, "https://developercommunity.visualstudio.com/content/problem/8808/c-structure-guide-lines-for-unsafe-fixed.html")]
         [Fact, Trait(Traits.Feature, Traits.Features.Formatting)]
         public async Task NewLineForOpenBracesNonDefault()
         {
             var changingOptions = new Dictionary<OptionKey, object>();
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInTypes, false);
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInMethods, false);
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInAnonymousMethods, false);
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInControlBlocks, false);
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInAnonymousTypes, false);
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInObjectCollectionArrayInitializers, false);
-            changingOptions.Add(CSharpFormattingOptions.NewLinesForBracesInLambdaExpressionBody, false);
+            changingOptions.Add(NewLinesForBracesInTypes, false);
+            changingOptions.Add(NewLinesForBracesInMethods, false);
+            changingOptions.Add(NewLinesForBracesInAnonymousMethods, false);
+            changingOptions.Add(NewLinesForBracesInControlBlocks, false);
+            changingOptions.Add(NewLinesForBracesInAnonymousTypes, false);
+            changingOptions.Add(NewLinesForBracesInObjectCollectionArrayInitializers, false);
+            changingOptions.Add(NewLinesForBracesInLambdaExpressionBody, false);
             await AssertFormatAsync(@"class f00 {
     void br() {
         Func<int, int> ret = x => {
@@ -1569,6 +1577,9 @@ public class foo : System.Object
         var obj1 = new foo {
         };
 
+        async void LocalFunction() {
+        }
+
         try {
         }
         catch (Exception e) {
@@ -1581,6 +1592,12 @@ public class foo : System.Object
         switch (switchVar) {
             default:
                 break;
+        }
+
+        unsafe {
+        }
+
+        fixed (int* p = &i) {
         }
     }
 }
@@ -1617,6 +1634,10 @@ var obj1 = new foo
             {
                             };
 
+        async void LocalFunction() 
+            {
+    }
+
            try
         {
         }
@@ -1634,6 +1655,14 @@ var obj1 = new foo
  {
             default: 
                 break;
+        }
+
+        unsafe
+{
+        }
+
+        fixed (int* p = &i)
+{
         }
 }
 }
@@ -4421,6 +4450,86 @@ case 1: break; case 2: break; default: break;}
         }
 
         [Fact]
+        [Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingInDeconstruction()
+        {
+            var code = @"class Class5{
+void bar()
+{
+var(x,y)=(1,2);
+}
+}";
+            var expectedCode = @"class Class5
+{
+    void bar()
+    {
+        var (x, y) = (1, 2);
+    }
+}";
+
+            await AssertFormatAsync(expectedCode, code);
+        }
+
+        [Fact]
+        [Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingInNullableTuple()
+        {
+            var code = @"class Class5
+{
+    void bar()
+    {
+        (int, string) ? x = (1, ""hello"");
+    }
+}";
+            var expectedCode = @"class Class5
+{
+    void bar()
+    {
+        (int, string)? x = (1, ""hello"");
+    }
+}";
+
+            await AssertFormatAsync(expectedCode, code);
+        }
+
+        [Fact]
+        [Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingInTupleExtension()
+        {
+            var code = @"static class Class5
+{
+    static void Extension(this(int, string) self) { }
+}";
+            var expectedCode = @"static class Class5
+{
+    static void Extension(this (int, string) self) { }
+}";
+
+            await AssertFormatAsync(expectedCode, code);
+        }
+
+        [Fact]
+        [Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingInNestedDeconstruction()
+        {
+            var code = @"class Class5{
+void bar()
+{
+( int x1 , var( x2,x3 ) )=(1,(2,3));
+}
+}";
+            var expectedCode = @"class Class5
+{
+    void bar()
+    {
+        (int x1, var (x2, x3)) = (1, (2, 3));
+    }
+}";
+
+            await AssertFormatAsync(expectedCode, code);
+        }
+
+        [Fact]
         [WorkItem(545335, "http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/545335")]
         [Trait(Traits.Feature, Traits.Features.Formatting)]
         public async Task PreprocessorOnSameLine()
@@ -6686,6 +6795,32 @@ class Program
 {
     void Main()
     {
+        for ( ;;)
+        {
+        }
+    }
+}";
+            var expected = @"
+class Program
+{
+    void Main()
+    {
+        for (; ; )
+        {
+        }
+    }
+}";
+            await AssertFormatAsync(expected, code);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingForForStatementInfiniteLoopWithNoSpaces()
+        {
+            var code = @"
+class Program
+{
+    void Main()
+    {
         for ( ; ; )
         {
         }
@@ -6701,7 +6836,75 @@ class Program
         }
     }
 }";
-            await AssertFormatAsync(expected, code);
+            var optionSet = new Dictionary<OptionKey, object>
+            {
+                { CSharpFormattingOptions.SpaceAfterSemicolonsInForStatement, false },
+            };
+
+            await AssertFormatAsync(expected, code, changedOptionSet: optionSet);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingForForStatementInfiniteLoopWithSpacesBefore()
+        {
+            var code = @"
+class Program
+{
+    void Main()
+    {
+        for (;; )
+        {
+        }
+    }
+}";
+            var expected = @"
+class Program
+{
+    void Main()
+    {
+        for ( ; ;)
+        {
+        }
+    }
+}";
+            var optionSet = new Dictionary<OptionKey, object>
+            {
+                { CSharpFormattingOptions.SpaceBeforeSemicolonsInForStatement, true },
+                { CSharpFormattingOptions.SpaceAfterSemicolonsInForStatement, false },
+            };
+
+            await AssertFormatAsync(expected, code, changedOptionSet: optionSet);
+        }
+
+        [Fact, Trait(Traits.Feature, Traits.Features.Formatting)]
+        public async Task SpacingForForStatementInfiniteLoopWithSpacesBeforeAndAfter()
+        {
+            var code = @"
+class Program
+{
+    void Main()
+    {
+        for (;;)
+        {
+        }
+    }
+}";
+            var expected = @"
+class Program
+{
+    void Main()
+    {
+        for ( ; ; )
+        {
+        }
+    }
+}";
+            var optionSet = new Dictionary<OptionKey, object>
+            {
+                { CSharpFormattingOptions.SpaceBeforeSemicolonsInForStatement, true },
+            };
+
+            await AssertFormatAsync(expected, code, changedOptionSet: optionSet);
         }
 
         [WorkItem(4421, "https://github.com/dotnet/roslyn/issues/4421")]
@@ -7325,7 +7528,7 @@ switch (o)
 
         private Task AssertFormatBodyAsync(string expected, string input)
         {
-            Func<string, string> transform = s => 
+            Func<string, string> transform = s =>
             {
                 var lines = s.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
                 for (int i = 0; i < lines.Length; i++)

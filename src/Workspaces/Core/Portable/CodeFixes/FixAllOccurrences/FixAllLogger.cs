@@ -112,7 +112,7 @@ namespace Microsoft.CodeAnalysis.CodeFixes
         {
             Logger.Log(FunctionId.CodeFixes_FixAllOccurrencesComputation_Diagnostics, KeyValueLogMessage.Create(m =>
             {
-                m[s_documentsWithDiagnosticsToFix] = documentsAndDiagnosticsToFixMap.Keys.Count();
+                m[s_documentsWithDiagnosticsToFix] = documentsAndDiagnosticsToFixMap.Count;
                 m[s_totalDiagnosticsToFix] = documentsAndDiagnosticsToFixMap.Values.Sum(v => v.Length);
             }));
         }
@@ -121,16 +121,16 @@ namespace Microsoft.CodeAnalysis.CodeFixes
         {
             Logger.Log(FunctionId.CodeFixes_FixAllOccurrencesComputation_Diagnostics, KeyValueLogMessage.Create(m =>
             {
-                m[s_projectsWithDiagnosticsToFix] = projectsAndDiagnosticsToFixMap.Keys.Count();
+                m[s_projectsWithDiagnosticsToFix] = projectsAndDiagnosticsToFixMap.Count;
                 m[s_totalDiagnosticsToFix] = projectsAndDiagnosticsToFixMap.Values.Sum(v => v.Length);
             }));
         }
 
-        public static void LogFixesToMergeStats(ConcurrentBag<CodeAction> fixesToMerge)
+        public static void LogFixesToMergeStats(int count)
         {
             Logger.Log(FunctionId.CodeFixes_FixAllOccurrencesComputation_Merge, KeyValueLogMessage.Create(m =>
             {
-                m[s_totalFixesToMerge] = fixesToMerge.Count;
+                m[s_totalFixesToMerge] = count;
             }));
         }
     }
